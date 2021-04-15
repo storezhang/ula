@@ -7,8 +7,8 @@ import (
 	`strings`
 	`time`
 
-	`github.com/class100/live-protocol-go`
 	`github.com/rs/xid`
+	`github.com/storezhang/ala/vo`
 
 	`github.com/storezhang/ala/conf`
 )
@@ -24,51 +24,47 @@ func NewLive(config conf.Tencentyun) *live {
 	}
 }
 
-func (l *live) Create(_ *protocol.CreateReq) (id string, err error) {
+func (l *live) Create(_ vo.Create) (id string, err error) {
 	// 取得和直播返回的直播编号
 	id = xid.New().String()
 
 	return
 }
 
-func (l *live) GetPushUrl(id string) (rsp *protocol.GetPushRsp, err error) {
-	rsp = new(protocol.GetPushRsp)
-	rsp.Index = 1
-	rsp.Urls = []*protocol.Url{
+func (l *live) GetPushUrls(id string) (urls []vo.Url, err error) {
+	urls = []vo.Url{
 		{
-			Type: protocol.FormatType_RTMP,
-			Link: l.makeUrl(protocol.FormatType_RTMP, l.config.Domain.Push, id, 1, true),
+			Type: vo.FormatTypeRtmp,
+			Link: l.makeUrl(vo.FormatTypeRtmp, l.config.Domain.Push, id, 1, true),
 		},
 	}
 
 	return
 }
 
-func (l *live) GetPullUrl(id string) (rsp *protocol.GetPullRsp, err error) {
-	rsp = new(protocol.GetPullRsp)
-	rsp.Index = 1
-	rsp.Cameras = []*protocol.Camera{
+func (l *live) GetPullCameras(id string) (cameras []vo.Camera, err error) {
+	cameras = []vo.Camera{
 		{
 			Index: 1,
-			Videos: []*protocol.Video{
+			Videos: []vo.Video{
 				{
-					Type: protocol.VideoType_ORIGINAL,
-					Urls: []*protocol.Url{
+					Type: vo.VideoTypeOriginal,
+					Urls: []vo.Url{
 						{
-							Type: protocol.FormatType_RTMP,
-							Link: l.makeUrl(protocol.FormatType_RTMP, l.config.Domain.Pull, id, 1, false),
+							Type: vo.FormatTypeRtmp,
+							Link: l.makeUrl(vo.FormatTypeRtmp, l.config.Domain.Pull, id, 1, false),
 						},
 						{
-							Type: protocol.FormatType_HLS,
-							Link: l.makeUrl(protocol.FormatType_HLS, l.config.Domain.Pull, id, 1, false),
+							Type: vo.FormatTypeHls,
+							Link: l.makeUrl(vo.FormatTypeHls, l.config.Domain.Pull, id, 1, false),
 						},
 						{
-							Type: protocol.FormatType_FLV,
-							Link: l.makeUrl(protocol.FormatType_FLV, l.config.Domain.Pull, id, 1, false),
+							Type: vo.FormatTypeFlv,
+							Link: l.makeUrl(vo.FormatTypeFlv, l.config.Domain.Pull, id, 1, false),
 						},
 						{
-							Type: protocol.FormatType_RTC,
-							Link: l.makeUrl(protocol.FormatType_RTC, l.config.Domain.Pull, id, 1, false),
+							Type: vo.FormatTypeRtc,
+							Link: l.makeUrl(vo.FormatTypeRtc, l.config.Domain.Pull, id, 1, false),
 						},
 					},
 				},
@@ -79,7 +75,7 @@ func (l *live) GetPullUrl(id string) (rsp *protocol.GetPullRsp, err error) {
 }
 
 func (l *live) makeUrl(
-	formatType protocol.FormatType,
+	formatType vo.FormatType,
 	domain string,
 	id string, camera int8,
 	isPush bool,
@@ -96,7 +92,7 @@ func (l *live) makeUrl(
 	}
 
 	switch formatType {
-	case protocol.FormatType_RTMP:
+	case vo.FormatTypeRtmp:
 		url = fmt.Sprintf(
 			"rtmp://%s/live/%s?txSecret=%s&txTime=%s",
 			domain,
@@ -104,7 +100,7 @@ func (l *live) makeUrl(
 			key,
 			hexExpiration,
 		)
-	case protocol.FormatType_RTC:
+	case vo.FormatTypeRtc:
 		url = fmt.Sprintf(
 			"webrtc://%s/live/%s?txSecret=%s&txTime=%s",
 			domain,
@@ -112,7 +108,7 @@ func (l *live) makeUrl(
 			key,
 			hexExpiration,
 		)
-	case protocol.FormatType_FLV:
+	case vo.FormatTypeFlv:
 		url = fmt.Sprintf(
 			"%s://%s/live/%s.flv?txSecret=%s&txTime=%s",
 			l.config.Scheme,
@@ -121,7 +117,7 @@ func (l *live) makeUrl(
 			key,
 			hexExpiration,
 		)
-	case protocol.FormatType_HLS:
+	case vo.FormatTypeHls:
 		url = fmt.Sprintf(
 			"%s://%s/live/%s.m3u8?txSecret=%s&txTime=%s",
 			l.config.Scheme,

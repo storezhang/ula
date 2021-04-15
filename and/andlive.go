@@ -3,24 +3,24 @@ package and
 import (
 	`fmt`
 	`strconv`
-	`time`
 
-	`github.com/class100/live-protocol-go`
 	`github.com/go-resty/resty/v2`
+	`github.com/storezhang/ala/vo`
 	`github.com/storezhang/gox`
 
 	`github.com/storezhang/ala/conf`
 )
 
-type Live struct {
+type live struct {
 	config conf.AndLive
 
 	resty *resty.Request
 	cache map[string]createAndLiveEventRsp
 }
 
-func NewLive(config conf.AndLive, resty *resty.Request) *Live {
-	return &Live{
+// NewLive 创建和直播
+func NewLive(config conf.AndLive, resty *resty.Request) *live {
+	return &live{
 		config: config,
 
 		resty: resty,
@@ -28,7 +28,7 @@ func NewLive(config conf.AndLive, resty *resty.Request) *Live {
 	}
 }
 
-func (l *Live) Create(req *protocol.CreateReq) (id string, err error) {
+func (l *live) Create(create vo.Create) (id string, err error) {
 	var (
 		andLiveReq map[string]string
 		andLiveRsp = new(createAndLiveEventRsp)
@@ -42,9 +42,9 @@ func (l *Live) Create(req *protocol.CreateReq) (id string, err error) {
 	params := createAndLiveEventReq{
 		ClientId:    l.config.Id,
 		AccessToken: token,
-		Name:        req.Title,
-		StartTime:   gox.ParseTimestamp(time.Unix(req.StartTime, 0)),
-		EndTime:     gox.ParseTimestamp(time.Unix(req.EndTime, 0)),
+		Name:        create.Title,
+		StartTime:   create.StartTime,
+		EndTime:     create.EndTime,
 		Uid:         l.config.Uid,
 	}
 	if andLiveReq, err = l.toMap(params); nil != err {
@@ -68,7 +68,7 @@ func (l *Live) Create(req *protocol.CreateReq) (id string, err error) {
 	return
 }
 
-func (l *Live) GetPushUrl(id string) (rsp *protocol.GetPushRsp, err error) {
+func (l *live) GetPushUrls(id string) (urls []vo.Url, err error) {
 	var (
 		createRsp createAndLiveEventRsp
 		ok        bool
@@ -78,11 +78,9 @@ func (l *Live) GetPushUrl(id string) (rsp *protocol.GetPushRsp, err error) {
 		return
 	}
 
-	rsp = new(protocol.GetPushRsp)
-	rsp.Index = 1
-	rsp.Urls = []*protocol.Url{
+	urls = []vo.Url{
 		{
-			Type: protocol.FormatType_RTMP,
+			Type: vo.FormatTypeRtmp,
 			Link: createRsp.PushUrl,
 		},
 	}
@@ -90,7 +88,7 @@ func (l *Live) GetPushUrl(id string) (rsp *protocol.GetPushRsp, err error) {
 	return
 }
 
-func (l *Live) GetPullUrl(id string) (rsp *protocol.GetPullRsp, err error) {
+func (l *live) GetPullCameras(id string) (cameras []vo.Camera, err error) {
 	var (
 		createRsp createAndLiveEventRsp
 		ok        bool
@@ -100,17 +98,15 @@ func (l *Live) GetPullUrl(id string) (rsp *protocol.GetPullRsp, err error) {
 		return
 	}
 
-	rsp = new(protocol.GetPullRsp)
-	rsp.Index = 1
-	rsp.Cameras = []*protocol.Camera{
+	cameras = []vo.Camera{
 		{
 			Index: 1,
-			Videos: []*protocol.Video{
+			Videos: []vo.Video{
 				{
-					Type: protocol.VideoType_ORIGINAL,
-					Urls: []*protocol.Url{
+					Type: vo.VideoTypeOriginal,
+					Urls: []vo.Url{
 						{
-							Type: protocol.FormatType_HLS,
+							Type: vo.FormatTypeHls,
 							Link: createRsp.Urls[0],
 						},
 					},
@@ -122,7 +118,7 @@ func (l *Live) GetPullUrl(id string) (rsp *protocol.GetPullRsp, err error) {
 	return
 }
 
-func (l *Live) getAndLiveToken() (token string, err error) {
+func (l *live) getAndLiveToken() (token string, err error) {
 	var (
 		andLiveReq map[string]string
 		rsp        = new(getAndLiveTokenRsp)
@@ -153,7 +149,7 @@ func (l *Live) getAndLiveToken() (token string, err error) {
 	return
 }
 
-func (l *Live) toMap(obj interface{}) (model map[string]string, err error) {
+func (l *live) toMap(obj interface{}) (model map[string]string, err error) {
 	var flattenParams map[string]interface{}
 
 	model = make(map[string]string)

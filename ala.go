@@ -1,8 +1,8 @@
 package ala
 
 import (
-	`github.com/class100/live-protocol-go`
 	`github.com/go-resty/resty/v2`
+	`github.com/storezhang/ala/vo`
 
 	`github.com/storezhang/ala/and`
 	`github.com/storezhang/ala/tencentyun`
@@ -11,11 +11,11 @@ import (
 // Live 直播接口
 type Live interface {
 	// Create 创建直播
-	Create(req *protocol.CreateReq) (id string, err error)
-	// GetPushUrl 获得推流地址
-	GetPushUrl(id string) (rsp *protocol.GetPushRsp, err error)
-	// GetPullUrl 获得拉流地址
-	GetPullUrl(id string) (rsp *protocol.GetPullRsp, err error)
+	Create(create vo.Create) (id string, err error)
+	// GetPushUrls 获得推流地址
+	GetPushUrls(id string) (urls []vo.Url, err error)
+	// GetPullCameras 获得拉流地址
+	GetPullCameras(id string) (cameras []vo.Camera, err error)
 }
 
 // NewLive 创建通用的直播实现
