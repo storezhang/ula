@@ -12,4 +12,6 @@ type Config struct {
 	And conf.AndLive `json:"and" yaml:"and" validate:"structonly"`
 	// Tencentyun 腾讯云直播配置
 	Tencentyun conf.Tencentyun `json:"tencentyun" yaml:"tencentyun" validate:"structonly"`
+	// Chuangcache 创世云配置
+	Chuangcache conf.Chuangcache `json:"chuangcache" yaml:"chuangcache" validate:"structonly"`
 }

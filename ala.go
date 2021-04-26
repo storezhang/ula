@@ -2,6 +2,7 @@ package ala
 
 import (
 	`github.com/go-resty/resty/v2`
+	`github.com/storezhang/ala/chuangcache`
 	`github.com/storezhang/ala/vo`
 
 	`github.com/storezhang/ala/and`
@@ -25,6 +26,8 @@ func NewLive(config Config, resty *resty.Request) (live Live) {
 		live = and.NewLive(config.And, resty)
 	case TypeTencentyun:
 		live = tencentyun.NewLive(config.Tencentyun)
+	case TypeChuangcache:
+		live = chuangcache.NewLive(config.Chuangcache)
 	}
 
 	return

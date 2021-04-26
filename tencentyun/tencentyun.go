@@ -1,7 +1,6 @@
 package tencentyun
 
 import (
-	`crypto/md5`
 	`fmt`
 	`strconv`
 	`strings`
@@ -9,6 +8,7 @@ import (
 
 	`github.com/rs/xid`
 	`github.com/storezhang/ala/vo`
+	`github.com/storezhang/gox`
 
 	`github.com/storezhang/ala/conf`
 )
@@ -35,7 +35,7 @@ func (l *live) GetPushUrls(id string) (urls []vo.Url, err error) {
 	urls = []vo.Url{
 		{
 			Type: vo.FormatTypeRtmp,
-			Link: l.makeUrl(vo.FormatTypeRtmp, l.config.Domain.Push, id, 1, true),
+			Link: l.makeUrl(vo.FormatTypeRtmp, l.config.Push.Domain, id, 1, true),
 		},
 	}
 
@@ -52,19 +52,19 @@ func (l *live) GetPullCameras(id string) (cameras []vo.Camera, err error) {
 					Urls: []vo.Url{
 						{
 							Type: vo.FormatTypeRtmp,
-							Link: l.makeUrl(vo.FormatTypeRtmp, l.config.Domain.Pull, id, 1, false),
+							Link: l.makeUrl(vo.FormatTypeRtmp, l.config.Pull.Domain, id, 1, false),
 						},
 						{
 							Type: vo.FormatTypeHls,
-							Link: l.makeUrl(vo.FormatTypeHls, l.config.Domain.Pull, id, 1, false),
+							Link: l.makeUrl(vo.FormatTypeHls, l.config.Pull.Domain, id, 1, false),
 						},
 						{
 							Type: vo.FormatTypeFlv,
-							Link: l.makeUrl(vo.FormatTypeFlv, l.config.Domain.Pull, id, 1, false),
+							Link: l.makeUrl(vo.FormatTypeFlv, l.config.Pull.Domain, id, 1, false),
 						},
 						{
 							Type: vo.FormatTypeRtc,
-							Link: l.makeUrl(vo.FormatTypeRtc, l.config.Domain.Pull, id, 1, false),
+							Link: l.makeUrl(vo.FormatTypeRtc, l.config.Pull.Domain, id, 1, false),
 						},
 					},
 				},
@@ -81,14 +81,14 @@ func (l *live) makeUrl(
 	isPush bool,
 ) (url string) {
 	expirationTime := time.Now().Add(l.config.Expiration).Unix()
-	hexExpiration := strings.ToUpper(strconv.FormatInt(expirationTime, 16))
+	expirationHex := strings.ToUpper(strconv.FormatInt(expirationTime, 16))
 	streamName := fmt.Sprintf("%s-%d", id, camera)
 
 	var key string
 	if isPush {
-		key = fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s%s%s", l.config.Key.Push, streamName, hexExpiration))))
+		key, _ = gox.Md5(fmt.Sprintf("%s%s%s", l.config.Push.Key, streamName, expirationHex))
 	} else {
-		key = fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s%s%s", l.config.Key.Pull, streamName, hexExpiration))))
+		key, _ = gox.Md5(fmt.Sprintf("%s%s%s", l.config.Pull.Key, streamName, expirationHex))
 	}
 
 	switch formatType {
@@ -98,7 +98,7 @@ func (l *live) makeUrl(
 			domain,
 			streamName,
 			key,
-			hexExpiration,
+			expirationHex,
 		)
 	case vo.FormatTypeRtc:
 		url = fmt.Sprintf(
@@ -106,7 +106,7 @@ func (l *live) makeUrl(
 			domain,
 			streamName,
 			key,
-			hexExpiration,
+			expirationHex,
 		)
 	case vo.FormatTypeFlv:
 		url = fmt.Sprintf(
@@ -115,7 +115,7 @@ func (l *live) makeUrl(
 			domain,
 			streamName,
 			key,
-			hexExpiration,
+			expirationHex,
 		)
 	case vo.FormatTypeHls:
 		url = fmt.Sprintf(
@@ -124,7 +124,7 @@ func (l *live) makeUrl(
 			domain,
 			streamName,
 			key,
-			hexExpiration,
+			expirationHex,
 		)
 	default:
 		url = fmt.Sprintf(
@@ -133,7 +133,7 @@ func (l *live) makeUrl(
 			domain,
 			streamName,
 			key,
-			hexExpiration,
+			expirationHex,
 		)
 	}
 
@@ -143,8 +143,8 @@ func (l *live) makeUrl(
 	// 该功能有并发播放限制：目前最多同时10路并发播放，避免因为盲目追求低延时而产生不必要的费用损失
 	// OBS的延时是不达标的：推流端如果是TXLivePusher，请使用setVideoQuality将quality设置为MAIN_PUBLISHER或者VIDEO_CHAT
 	// 该功能按播放时长收费：本功能按照播放时长收费，费用跟拉流的路数有关系，跟音视频流的码率无关，具体价格请参考 价格总览
-	if 0 != l.config.Domain.BizId {
-		url = fmt.Sprintf("%s&bizid=%d", url, l.config.Domain.BizId)
+	if 0 != l.config.BizId {
+		url = fmt.Sprintf("%s&bizid=%d", url, l.config.BizId)
 	}
 
 	return
