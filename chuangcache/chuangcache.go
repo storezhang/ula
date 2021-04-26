@@ -96,13 +96,23 @@ func (l *live) makeUrl(
 
 	switch formatType {
 	case vo.FormatTypeRtmp:
-		url = fmt.Sprintf(
-			"rtmp://%s/live/%s?token=%s?expire=%s",
-			domain,
-			streamName,
-			token,
-			expirationString,
-		)
+		if isPush {
+			url = fmt.Sprintf(
+				"rtmp://%s/live/%s?token=%s?expire=%s",
+				domain,
+				streamName,
+				token,
+				expirationString,
+			)
+		} else {
+			url = fmt.Sprintf(
+				"rtmp://%s/live/%s?secret=%s&timestamp=%s",
+				domain,
+				streamName,
+				secret,
+				expirationHex,
+			)
+		}
 	case vo.FormatTypeFlv:
 		url = fmt.Sprintf(
 			"%s://%s/live/%s.flv?secret=%s&timestamp=%s",
