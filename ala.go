@@ -1,12 +1,12 @@
-package ala
+package ula
 
 import (
 	`github.com/go-resty/resty/v2`
-	`github.com/storezhang/ala/chuangcache`
-	`github.com/storezhang/ala/vo`
+	`github.com/storezhang/ula/chuangcache`
+	`github.com/storezhang/ula/vo`
 
-	`github.com/storezhang/ala/and`
-	`github.com/storezhang/ala/tencentyun`
+	`github.com/storezhang/ula/and`
+	`github.com/storezhang/ula/tencentyun`
 )
 
 // Live 直播接口

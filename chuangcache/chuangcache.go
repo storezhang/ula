@@ -2,15 +2,13 @@ package chuangcache
 
 import (
 	`fmt`
-	`strconv`
-	`strings`
 	`time`
 
 	`github.com/rs/xid`
-	`github.com/storezhang/ala/vo`
 	`github.com/storezhang/gox`
+	`github.com/storezhang/ula/vo`
 
-	`github.com/storezhang/ala/conf`
+	`github.com/storezhang/ula/conf`
 )
 
 type live struct {
@@ -79,7 +77,6 @@ func (l *live) makeUrl(
 	expiration := time.Now().Add(l.config.Expiration)
 	expirationTime := expiration.Unix()
 	expirationString := expiration.Format("2006-01-02T15:04:05Z")
-	expirationHex := strings.ToUpper(strconv.FormatInt(expirationTime, 16))
 	streamName := fmt.Sprintf("%s-%d", id, camera)
 
 	var (
@@ -90,7 +87,7 @@ func (l *live) makeUrl(
 		data := fmt.Sprintf("rtmp://%s/live/%s;%s", l.config.Push.Domain, streamName, expirationString)
 		token, _ = gox.Sha256Hmac(data, l.config.Push.Key)
 	} else {
-		data := fmt.Sprintf("%s/%s/ghs%s", l.config.Pull.Key, l.config.Pull.Domain, expirationHex)
+		data := fmt.Sprintf("%s/%s/live/%s%d", l.config.Pull.Key, l.config.Pull.Domain, streamName, expirationTime)
 		secret, _ = gox.Md5(data)
 	}
 
@@ -110,7 +107,7 @@ func (l *live) makeUrl(
 				domain,
 				streamName,
 				secret,
-				expirationHex,
+				expirationTime,
 			)
 		}
 	case vo.FormatTypeFlv:
@@ -120,7 +117,7 @@ func (l *live) makeUrl(
 			domain,
 			streamName,
 			secret,
-			expirationHex,
+			expirationTime,
 		)
 	case vo.FormatTypeHls:
 		url = fmt.Sprintf(
@@ -129,7 +126,7 @@ func (l *live) makeUrl(
 			domain,
 			streamName,
 			secret,
-			expirationHex,
+			expirationTime,
 		)
 	default:
 		url = fmt.Sprintf(
@@ -138,7 +135,7 @@ func (l *live) makeUrl(
 			domain,
 			streamName,
 			secret,
-			expirationHex,
+			expirationTime,
 		)
 	}
 

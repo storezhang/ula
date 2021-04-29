@@ -1,4 +1,4 @@
-package ala
+package ula
 
 const (
 	// TypeAndLive 和直播

@@ -1,7 +1,7 @@
-package ala
+package ula
 
 import (
-	`github.com/storezhang/ala/conf`
+	`github.com/storezhang/ula/conf`
 )
 
 // Config 配置

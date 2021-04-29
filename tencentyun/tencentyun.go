@@ -7,10 +7,10 @@ import (
 	`time`
 
 	`github.com/rs/xid`
-	`github.com/storezhang/ala/vo`
 	`github.com/storezhang/gox`
+	`github.com/storezhang/ula/vo`
 
-	`github.com/storezhang/ala/conf`
+	`github.com/storezhang/ula/conf`
 )
 
 type live struct {

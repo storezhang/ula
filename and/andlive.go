@@ -5,10 +5,10 @@ import (
 	`strconv`
 
 	`github.com/go-resty/resty/v2`
-	`github.com/storezhang/ala/vo`
 	`github.com/storezhang/gox`
+	`github.com/storezhang/ula/vo`
 
-	`github.com/storezhang/ala/conf`
+	`github.com/storezhang/ula/conf`
 )
 
 type live struct {

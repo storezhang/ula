@@ -1,4 +1,4 @@
-module github.com/storezhang/ala
+module github.com/storezhang/ula
 
 go 1.16
 

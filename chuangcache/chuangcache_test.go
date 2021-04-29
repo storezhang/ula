@@ -5,7 +5,7 @@ import (
 	`testing`
 
 	`github.com/rs/xid`
-	`github.com/storezhang/ala/conf`
+	`github.com/storezhang/ula/conf`
 )
 
 func TestChuangcache(t *testing.T) {
