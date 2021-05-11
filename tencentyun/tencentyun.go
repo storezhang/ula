@@ -1,16 +1,16 @@
 package tencentyun
 
 import (
-	`fmt`
-	`strconv`
-	`strings`
-	`time`
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
 
-	`github.com/rs/xid`
-	`github.com/storezhang/gox`
-	`github.com/storezhang/ula/vo`
+	"github.com/rs/xid"
+	"github.com/storezhang/gox"
+	"github.com/storezhang/ula/vo"
 
-	`github.com/storezhang/ula/conf`
+	"github.com/storezhang/ula/conf"
 )
 
 type live struct {
@@ -45,7 +45,7 @@ func (l *live) GetPushUrls(id string) (urls []vo.Url, err error) {
 func (l *live) GetPullCameras(id string) (cameras []vo.Camera, err error) {
 	cameras = []vo.Camera{
 		{
-			Index: 1,
+			Index: "1",
 			Videos: []vo.Video{
 				{
 					Type: vo.VideoTypeOriginal,

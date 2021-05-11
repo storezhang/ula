@@ -7,6 +7,8 @@ const (
 	TypeTencentyun Type = "tencentyun"
 	// TypeChuangcache 创世云直播
 	TypeChuangcache Type = "chuangcache"
+	// TypeMigu 咪咕直播
+	TypeMigu Type = "migu"
 )
 
 // Type 直播SDK类型

@@ -1,12 +1,13 @@
 package ula
 
 import (
-	`github.com/go-resty/resty/v2`
-	`github.com/storezhang/ula/chuangcache`
-	`github.com/storezhang/ula/vo`
+	"github.com/go-resty/resty/v2"
+	"github.com/storezhang/ula/chuangcache"
+	"github.com/storezhang/ula/migu"
+	"github.com/storezhang/ula/vo"
 
-	`github.com/storezhang/ula/and`
-	`github.com/storezhang/ula/tencentyun`
+	"github.com/storezhang/ula/and"
+	"github.com/storezhang/ula/tencentyun"
 )
 
 // Live 直播接口
@@ -28,6 +29,8 @@ func NewLive(config Config, resty *resty.Request) (live Live) {
 		live = tencentyun.NewLive(config.Tencentyun)
 	case TypeChuangcache:
 		live = chuangcache.NewLive(config.Chuangcache)
+	case TypeMigu:
+		live = migu.NewLive(config.Migu)
 	}
 
 	return

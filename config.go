@@ -1,7 +1,7 @@
 package ula
 
 import (
-	`github.com/storezhang/ula/conf`
+	"github.com/storezhang/ula/conf"
 )
 
 // Config 配置
@@ -14,4 +14,6 @@ type Config struct {
 	Tencentyun conf.Tencentyun `json:"tencentyun" yaml:"tencentyun" validate:"structonly"`
 	// Chuangcache 创世云配置
 	Chuangcache conf.Chuangcache `json:"chuangcache" yaml:"chuangcache" validate:"structonly"`
+	// migu 咪咕配置
+	Migu conf.Migu `json:"migu" yaml:"migu" validate:"structonly"`
 }
