@@ -100,7 +100,7 @@ func (l *live) GetPullCameras(id string) (cameras []vo.Camera, err error) {
 
 	cameras = []vo.Camera{
 		{
-			Index: 1,
+			Index: "1",
 			Videos: []vo.Video{
 				{
 					Type: vo.VideoTypeOriginal,
