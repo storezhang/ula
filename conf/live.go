@@ -1,9 +1,9 @@
 package conf
 
 import (
-	`time`
+	"time"
 
-	`github.com/storezhang/gox`
+	"github.com/storezhang/gox"
 )
 
 // Live 直播配置
