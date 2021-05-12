@@ -69,7 +69,7 @@ func (l *live) GetPushUrls(channelID string) (urls []vo.Url, err error) {
 	}
 
 	var resultBts []byte
-	resultBts, err = sj.Get("result").Bytes()
+	resultBts, err = sj.Get("data").Encode()
 	if err != nil {
 		return
 	}
@@ -97,7 +97,7 @@ func (l *live) GetPullCameras(channelID string) (cameras []vo.Camera, err error)
 	}
 
 	var resultBts []byte
-	resultBts, err = sj.Get("result").Bytes()
+	resultBts, err = sj.Get("data").Encode()
 	if err != nil {
 		return
 	}
@@ -107,10 +107,10 @@ func (l *live) GetPullCameras(channelID string) (cameras []vo.Camera, err error)
 		return
 	}
 
-	cameras = make([]vo.Camera, len(result.CameraList))
-	for i, camera := range result.CameraList {
+	cameras = make([]vo.Camera, 0, len(result.CameraList))
+	for _, camera := range result.CameraList {
 
-		videos := make([]vo.Video, len(camera.TranscodeList))
+		videos := make([]vo.Video, 0, len(camera.TranscodeList))
 		for _, v := range camera.TranscodeList {
 			videos = append(videos, vo.Video{
 				Type: transType2VideoType(v.TransType),
@@ -131,8 +131,11 @@ func (l *live) GetPullCameras(channelID string) (cameras []vo.Camera, err error)
 			})
 		}
 
-		cameras[i].Videos = videos
-		cameras[i].Index = camera.camIndex
+		cm := vo.Camera{
+			Index:  camera.camIndex,
+			Videos: videos,
+		}
+		cameras = append(cameras, cm)
 	}
 
 	return
@@ -157,6 +160,7 @@ func (l *live) httpDo(method, url string, body io.Reader) (sj *simplejson.Json, 
 }
 
 func (l *live) hasErr(reader io.Reader) (sj *simplejson.Json, err error) {
+
 	sj, err = simplejson.NewFromReader(reader)
 	if err != nil {
 		return
