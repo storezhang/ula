@@ -1,14 +1,14 @@
 package migu
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
-	"fmt"
+	`bytes`
+	`encoding/json`
+	`errors`
+	`fmt`
 
-	"github.com/go-resty/resty/v2"
-	"github.com/storezhang/ula/conf"
-	"github.com/storezhang/ula/vo"
+	`github.com/go-resty/resty/v2`
+	`github.com/storezhang/ula/conf`
+	`github.com/storezhang/ula/vo`
 )
 
 type live struct {
@@ -177,6 +177,7 @@ func transType2VideoType(transType string) vo.VideoType {
 		return vo.VideoType1080P
 	case "5":
 		return vo.VideoTypeAudio
+	default:
+		return vo.VideoType360P
 	}
-	return vo.VideoType360P
 }

@@ -1,7 +1,7 @@
 package vo
 
 import (
-	"github.com/storezhang/gox"
+	`github.com/storezhang/gox`
 )
 
 // Create 创建一个直播

@@ -1,12 +1,10 @@
 package migu
 
 import (
-	"errors"
-	"net/http"
+	`errors`
 )
 
 var (
-	httpClient       = &http.Client{}
 	ParamMissing     = errors.New("param missing")
 	ParamMissSubject = errors.New("param miss subject")
 )

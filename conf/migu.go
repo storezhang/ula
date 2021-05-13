@@ -1,7 +1,7 @@
 package conf
 
 import (
-	"github.com/storezhang/gox"
+	`github.com/storezhang/gox`
 )
 
 type Migu struct {

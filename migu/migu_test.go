@@ -1,17 +1,15 @@
 package migu_test
 
 import (
-	"fmt"
-	"testing"
-	"time"
+	`fmt`
+	`testing`
+	`time`
 
-	"github.com/storezhang/gox"
-
-	"github.com/storezhang/ula/conf"
-	"github.com/storezhang/ula/migu"
-	"github.com/storezhang/ula/vo"
-
-	"github.com/storezhang/ula"
+	`github.com/storezhang/gox`
+	`github.com/storezhang/ula/conf`
+	`github.com/storezhang/ula/migu`
+	`github.com/storezhang/ula/vo`
+	`github.com/storezhang/ula`
 )
 
 func initLive() ula.Live {

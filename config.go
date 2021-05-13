@@ -1,7 +1,7 @@
 package ula
 
 import (
-	"github.com/storezhang/ula/conf"
+	`github.com/storezhang/ula/conf`
 )
 
 // Config 配置
