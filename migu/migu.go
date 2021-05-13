@@ -5,22 +5,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 
-	"github.com/bitly/go-simplejson"
+	"github.com/go-resty/resty/v2"
 	"github.com/storezhang/ula/conf"
 	"github.com/storezhang/ula/vo"
 )
 
 type live struct {
 	config conf.Migu
+	resty  *resty.Request
 }
 
 // NewLive 创建咪咕直播实现类
-func NewLive(config conf.Migu) *live {
+func NewLive(config conf.Migu, resty *resty.Request) *live {
 	return &live{
 		config: config,
+		resty:  resty,
 	}
 }
 
@@ -46,36 +46,48 @@ func (l *live) Create(create vo.Create) (id string, err error) {
 	bodyMap["startTime"] = create.StartTime.Time().Format("2006-01-02 15:04:05")
 	bodyMap["endTime"] = create.EndTime.Time().Format("2006-01-02 15:04:05")
 
-	bts, _ := json.Marshal(bodyMap)
-	body := string(bts)
-
-	var sj *simplejson.Json
-	if sj, err = l.httpDo(http.MethodPost, url, bytes.NewBufferString(body)); err != nil {
+	var bts []byte
+	bts, err = json.Marshal(bodyMap)
+	if err != nil {
 		return
 	}
 
-	id, err = sj.Get("data").Get("channelId").String()
+	channelID := new(channelID)
+	ret := &ret{
+		Data: channelID,
+	}
+	_, err = l.resty.SetHeader("Content-Type", "application/json").
+		SetBody(bytes.NewBuffer(bts)).
+		SetResult(ret).
+		Post(url)
+	if err != nil {
+		return
+	}
 
-	return
+	if err = l.hasErr(ret); err != nil {
+		return
+	}
+
+	return channelID.ChannelID, nil
 }
 
 func (l *live) GetPushUrls(channelID string) (urls []vo.Url, err error) {
 	url := fmt.Sprintf("%s://%s/eduOnlineApi/migu/getPushUrl", l.config.Scheme, l.config.Addr)
 	body := fmt.Sprintf(`{"channel_id": "%s"}`, channelID)
 
-	var sj *simplejson.Json
-	if sj, err = l.httpDo(http.MethodPost, url, bytes.NewBufferString(body)); err != nil {
-		return
+	result := new(pushUrl)
+	ret := &ret{
+		Data: result,
 	}
-
-	var resultBts []byte
-	resultBts, err = sj.Get("data").Encode()
+	_, err = l.resty.SetHeader("Content-Type", "application/json").
+		SetBody(bytes.NewBufferString(body)).
+		SetResult(ret).
+		Post(url)
 	if err != nil {
 		return
 	}
 
-	result := new(PushUrl)
-	if err = json.Unmarshal(resultBts, result); err != nil {
+	if err = l.hasErr(ret); err != nil {
 		return
 	}
 
@@ -91,19 +103,19 @@ func (l *live) GetPullCameras(channelID string) (cameras []vo.Camera, err error)
 	url := fmt.Sprintf("%s://%s/eduOnlineApi/migu/getPullUrl", l.config.Scheme, l.config.Addr)
 	body := fmt.Sprintf(`{"channel_id": "%s"}`, channelID)
 
-	var sj *simplejson.Json
-	if sj, err = l.httpDo(http.MethodPost, url, bytes.NewBufferString(body)); err != nil {
-		return
+	result := new(pullUrl)
+	ret := &ret{
+		Data: result,
 	}
-
-	var resultBts []byte
-	resultBts, err = sj.Get("data").Encode()
+	_, err = l.resty.SetHeader("Content-Type", "application/json").
+		SetBody(bytes.NewBufferString(body)).
+		SetResult(ret).
+		Post(url)
 	if err != nil {
 		return
 	}
 
-	result := new(PullUrl)
-	if err = json.Unmarshal(resultBts, result); err != nil {
+	if err = l.hasErr(ret); err != nil {
 		return
 	}
 
@@ -132,7 +144,7 @@ func (l *live) GetPullCameras(channelID string) (cameras []vo.Camera, err error)
 		}
 
 		cm := vo.Camera{
-			Index:  camera.camIndex,
+			Index:  camera.CamIndex,
 			Videos: videos,
 		}
 		cameras = append(cameras, cm)
@@ -142,43 +154,9 @@ func (l *live) GetPullCameras(channelID string) (cameras []vo.Camera, err error)
 
 }
 
-func (l *live) httpDo(method, url string, body io.Reader) (sj *simplejson.Json, err error) {
-	var req *http.Request
-	req, err = http.NewRequest(method, url, body)
-	if err != nil {
-		return
-	}
-
-	var resp *http.Response
-	resp, err = httpClient.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	return l.hasErr(resp.Body)
-}
-
-func (l *live) hasErr(reader io.Reader) (sj *simplejson.Json, err error) {
-
-	sj, err = simplejson.NewFromReader(reader)
-	if err != nil {
-		return
-	}
-
-	var ret int
-	ret, err = sj.Get("ret").Int()
-	if err != nil {
-		return
-	}
-
-	if ret != 0 {
-		var errStr string
-		errStr, err = sj.Get("msg").String()
-		if err != nil {
-			return
-		}
-		err = errors.New(errStr)
+func (l *live) hasErr(ret *ret) (err error) {
+	if ret.Ret != 0 {
+		err = errors.New(ret.Msg)
 		return
 	}
 

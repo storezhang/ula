@@ -1,20 +1,20 @@
 package migu
 
-type CameraPush struct {
+type cameraPush struct {
 	Status   int    `json:"status"`
 	CamIndex string `json:"camIndex"`
 	URL      string `json:"url"`
 }
 
-type PushUrl struct {
+type pushUrl struct {
 	UID        string       `json:"uid"`
 	ChannelID  string       `json:"channelId"`
 	ImgURL     string       `json:"imgUrl"`
-	CameraList []CameraPush `json:"cameraList"`
+	CameraList []cameraPush `json:"cameraList"`
 }
 
-type CameraPull struct {
-	camIndex      string `json:"camIndex"`
+type cameraPull struct {
+	CamIndex      string `json:"camIndex"`
 	TranscodeList []struct {
 		TransType string `json:"transType"`
 		URLRtmp   string `json:"urlRtmp"`
@@ -23,11 +23,21 @@ type CameraPull struct {
 	} `json:"transcodeList"`
 }
 
-type PullUrl struct {
+type pullUrl struct {
 	UID        string       `json:"uid"`
 	ChannelID  string       `json:"channelId"`
 	ImgURL     string       `json:"imgUrl"`
 	CDNType    int8         `json:"cdnType"`
 	ViewerNum  int64        `json:"viewerNum"`
-	CameraList []CameraPull `json:"cameraList`
+	CameraList []cameraPull `json:"cameraList`
+}
+
+type channelID struct {
+	ChannelID string `json:"channelId"`
+}
+
+type ret struct {
+	Ret  int         `json:"ret"`
+	Msg  string      `json:"msg"`
+	Data interface{} `json:"data"`
 }

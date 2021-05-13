@@ -30,7 +30,7 @@ func NewLive(config Config, resty *resty.Request) (live Live) {
 	case TypeChuangcache:
 		live = chuangcache.NewLive(config.Chuangcache)
 	case TypeMigu:
-		live = migu.NewLive(config.Migu)
+		live = migu.NewLive(config.Migu, resty)
 	}
 
 	return
