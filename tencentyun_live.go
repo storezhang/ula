@@ -1,70 +1,92 @@
-package tencentyun
+package ula
 
 import (
-	`fmt`
-	`strconv`
-	`strings`
-	`time`
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
 
-	`github.com/rs/xid`
-	`github.com/storezhang/gox`
-	`github.com/storezhang/ula/vo`
+	"github.com/rs/xid"
+	"github.com/storezhang/gox"
 
-	`github.com/storezhang/ula/conf`
+	"github.com/storezhang/ula/conf"
 )
 
-type live struct {
+type TencentyunLive struct {
 	config conf.Tencentyun
+
+	template ulaTemplate
 }
 
 // NewLive 创建腾讯云直播实现类
-func NewLive(config conf.Tencentyun) *live {
-	return &live{
+func NewTencentyun() (tencentyunLive *TencentyunLive) {
+	var config conf.Tencentyun
+
+	tencentyunLive = &TencentyunLive{
 		config: config,
 	}
+
+	tencentyunLive.template = ulaTemplate{tencentyunLive: tencentyunLive}
+
+	return
 }
 
-func (l *live) Create(_ vo.Create) (id string, err error) {
+// CreateLive 创建直播信息
+func (l *TencentyunLive) CreateLive(req *CreateLiveReq, opts ...option) (id string, err error) {
+	return l.template.CreateLive(req, opts...)
+}
+
+// GetLivePushFlowInfo 获得推流信息
+func (l *TencentyunLive) GetLivePushFlowInfo(id string, opts ...option) (urls []Url, err error) {
+	return l.template.GetLivePushFlowInfo(id, opts...)
+}
+
+// GetLivePullFlowInfo 获得拉流信息
+func (l *TencentyunLive) GetLivePullFlowInfo(id string, opts ...option) (cameras []Camera, err error) {
+	return l.template.GetLivePullFlowInfo(id, opts...)
+}
+
+func (l *TencentyunLive) createLive(req *CreateLiveReq, opts *options) (id string, err error) {
 	// 取得和直播返回的直播编号
 	id = xid.New().String()
 
 	return
 }
 
-func (l *live) GetPushUrls(id string) (urls []vo.Url, err error) {
-	urls = []vo.Url{
+func (l *TencentyunLive) getLivePushFlowInfo(id string, opts *options) (urls []Url, err error) {
+	urls = []Url{
 		{
-			Type: vo.FormatTypeRtmp,
-			Link: l.makeUrl(vo.FormatTypeRtmp, l.config.Push.Domain, id, 1, true),
+			Type: VideoFormatTypeRtmp,
+			Link: l.makeUrl(VideoFormatTypeRtmp, l.config.Push.Domain, id, 1, true),
 		},
 	}
 
 	return
 }
 
-func (l *live) GetPullCameras(id string) (cameras []vo.Camera, err error) {
-	cameras = []vo.Camera{
+func (l *TencentyunLive) getLivePullFlowInfo(id string, opts *options) (cameras []Camera, err error) {
+	cameras = []Camera{
 		{
 			Index: 1,
-			Videos: []vo.Video{
+			Videos: []Video{
 				{
-					Type: vo.VideoTypeOriginal,
-					Urls: []vo.Url{
+					Type: VideoTypeOriginal,
+					Urls: []Url{
 						{
-							Type: vo.FormatTypeRtmp,
-							Link: l.makeUrl(vo.FormatTypeRtmp, l.config.Pull.Domain, id, 1, false),
+							Type: VideoFormatTypeRtmp,
+							Link: l.makeUrl(VideoFormatTypeRtmp, l.config.Pull.Domain, id, 1, false),
 						},
 						{
-							Type: vo.FormatTypeHls,
-							Link: l.makeUrl(vo.FormatTypeHls, l.config.Pull.Domain, id, 1, false),
+							Type: VideoFormatTypeHls,
+							Link: l.makeUrl(VideoFormatTypeHls, l.config.Pull.Domain, id, 1, false),
 						},
 						{
-							Type: vo.FormatTypeFlv,
-							Link: l.makeUrl(vo.FormatTypeFlv, l.config.Pull.Domain, id, 1, false),
+							Type: VideoFormatTypeFlv,
+							Link: l.makeUrl(VideoFormatTypeFlv, l.config.Pull.Domain, id, 1, false),
 						},
 						{
-							Type: vo.FormatTypeRtc,
-							Link: l.makeUrl(vo.FormatTypeRtc, l.config.Pull.Domain, id, 1, false),
+							Type: VideoFormatTypeRtc,
+							Link: l.makeUrl(VideoFormatTypeRtc, l.config.Pull.Domain, id, 1, false),
 						},
 					},
 				},
@@ -74,8 +96,8 @@ func (l *live) GetPullCameras(id string) (cameras []vo.Camera, err error) {
 	return
 }
 
-func (l *live) makeUrl(
-	formatType vo.FormatType,
+func (l *TencentyunLive) makeUrl(
+	formatType VideoFormatType,
 	domain string,
 	id string, camera int8,
 	isPush bool,
@@ -92,7 +114,7 @@ func (l *live) makeUrl(
 	}
 
 	switch formatType {
-	case vo.FormatTypeRtmp:
+	case VideoFormatTypeRtmp:
 		url = fmt.Sprintf(
 			"rtmp://%s/live/%s?txSecret=%s&txTime=%s",
 			domain,
@@ -100,7 +122,7 @@ func (l *live) makeUrl(
 			key,
 			expirationHex,
 		)
-	case vo.FormatTypeRtc:
+	case VideoFormatTypeRtc:
 		url = fmt.Sprintf(
 			"webrtc://%s/live/%s?txSecret=%s&txTime=%s",
 			domain,
@@ -108,7 +130,7 @@ func (l *live) makeUrl(
 			key,
 			expirationHex,
 		)
-	case vo.FormatTypeFlv:
+	case VideoFormatTypeFlv:
 		url = fmt.Sprintf(
 			"%s://%s/live/%s.flv?txSecret=%s&txTime=%s",
 			l.config.Scheme,
@@ -117,7 +139,7 @@ func (l *live) makeUrl(
 			key,
 			expirationHex,
 		)
-	case vo.FormatTypeHls:
+	case VideoFormatTypeHls:
 		url = fmt.Sprintf(
 			"%s://%s/live/%s.m3u8?txSecret=%s&txTime=%s",
 			l.config.Scheme,

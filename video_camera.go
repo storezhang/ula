@@ -1,4 +1,4 @@
-package vo
+package ula
 
 // Camera 描述一个直播摄像头
 type Camera struct {

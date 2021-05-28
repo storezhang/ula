@@ -1,4 +1,4 @@
-package vo
+package ula
 
 // Video 视频
 type Video struct {

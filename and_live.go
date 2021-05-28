@@ -1,50 +1,75 @@
-package and
+package ula
 
 import (
-	`fmt`
-	`strconv`
+	"fmt"
+	"strconv"
+	"sync"
 
-	`github.com/go-resty/resty/v2`
-	`github.com/storezhang/gox`
-	`github.com/storezhang/ula/vo`
+	"github.com/go-resty/resty/v2"
+	"github.com/storezhang/gox"
 
-	`github.com/storezhang/ula/conf`
+	"github.com/storezhang/ula/conf"
 )
 
-type live struct {
+type AndLive struct {
 	config conf.AndLive
 
-	resty *resty.Request
+	resty    *resty.Request
+	template ulaTemplate
+
+	clientCache sync.Map
+
 	cache map[string]createAndLiveEventRsp
 }
 
-// NewLive 创建和直播
-func NewLive(config conf.AndLive, resty *resty.Request) *live {
-	return &live{
-		config: config,
+// NewAndLive 创建和直播
+func NewAndLive(resty *resty.Request) (andLive *AndLive) {
+	var conf conf.AndLive
 
-		resty: resty,
-		cache: make(map[string]createAndLiveEventRsp),
+	andLive = &AndLive{
+		config: conf,
+		resty:  resty,
+		cache:  make(map[string]createAndLiveEventRsp),
 	}
+
+	andLive.template = ulaTemplate{andLive: andLive}
+
+	return
 }
 
-func (l *live) Create(create vo.Create) (id string, err error) {
+// CreateLive 创建直播信息
+func (l *AndLive) CreateLive(req *CreateLiveReq, opts ...option) (id string, err error) {
+	return l.template.CreateLive(req, opts...)
+}
+
+// GetLivePushFlowInfo 获得推流信息
+func (l *AndLive) GetLivePushFlowInfo(id string, opts ...option) (urls []Url, err error) {
+	return l.template.GetLivePushFlowInfo(id, opts...)
+}
+
+// GetLivePullFlowInfo 获得拉流信息
+func (l *AndLive) GetLivePullFlowInfo(id string, opts ...option) (cameras []Camera, err error) {
+	return l.template.GetLivePullFlowInfo(id, opts...)
+}
+
+// createLive 创建直播信息
+func (l *AndLive) createLive(req *CreateLiveReq, opts *options) (id string, err error) {
 	var (
 		andLiveReq map[string]string
 		andLiveRsp = new(createAndLiveEventRsp)
 		token      string
 	)
 
-	if token, err = l.getAndLiveToken(); nil != err {
+	if token, err = l.getAndLiveToken(opts); nil != err {
 		return
 	}
 
 	params := createAndLiveEventReq{
 		ClientId:    l.config.Id,
 		AccessToken: token,
-		Name:        create.Title,
-		StartTime:   create.StartTime,
-		EndTime:     create.EndTime,
+		Name:        req.Title,
+		StartTime:   req.StartTime,
+		EndTime:     req.EndTime,
 		Uid:         l.config.Uid,
 	}
 	if andLiveReq, err = l.toMap(params); nil != err {
@@ -68,7 +93,8 @@ func (l *live) Create(create vo.Create) (id string, err error) {
 	return
 }
 
-func (l *live) GetPushUrls(id string) (urls []vo.Url, err error) {
+// getLivePushFlowInfo 获得推流信息
+func (l *AndLive) getLivePushFlowInfo(id string, opts *options) (urls []Url, err error) {
 	var (
 		createRsp createAndLiveEventRsp
 		ok        bool
@@ -78,9 +104,9 @@ func (l *live) GetPushUrls(id string) (urls []vo.Url, err error) {
 		return
 	}
 
-	urls = []vo.Url{
+	urls = []Url{
 		{
-			Type: vo.FormatTypeRtmp,
+			Type: VideoFormatTypeRtmp,
 			Link: createRsp.PushUrl,
 		},
 	}
@@ -88,7 +114,8 @@ func (l *live) GetPushUrls(id string) (urls []vo.Url, err error) {
 	return
 }
 
-func (l *live) GetPullCameras(id string) (cameras []vo.Camera, err error) {
+// getLivePullFlowInfo 获得拉流信息
+func (l *AndLive) getLivePullFlowInfo(id string, opts *options) (cameras []Camera, err error) {
 	var (
 		createRsp createAndLiveEventRsp
 		ok        bool
@@ -98,15 +125,15 @@ func (l *live) GetPullCameras(id string) (cameras []vo.Camera, err error) {
 		return
 	}
 
-	cameras = []vo.Camera{
+	cameras = []Camera{
 		{
 			Index: 1,
-			Videos: []vo.Video{
+			Videos: []Video{
 				{
-					Type: vo.VideoTypeOriginal,
-					Urls: []vo.Url{
+					Type: VideoTypeOriginal,
+					Urls: []Url{
 						{
-							Type: vo.FormatTypeHls,
+							Type: VideoFormatTypeHls,
 							Link: createRsp.Urls[0],
 						},
 					},
@@ -118,7 +145,7 @@ func (l *live) GetPullCameras(id string) (cameras []vo.Camera, err error) {
 	return
 }
 
-func (l *live) getAndLiveToken() (token string, err error) {
+func (l *AndLive) getAndLiveToken(opts *options) (token string, err error) {
 	var (
 		andLiveReq map[string]string
 		rsp        = new(getAndLiveTokenRsp)
@@ -149,7 +176,7 @@ func (l *live) getAndLiveToken() (token string, err error) {
 	return
 }
 
-func (l *live) toMap(obj interface{}) (model map[string]string, err error) {
+func (l *AndLive) toMap(obj interface{}) (model map[string]string, err error) {
 	var flattenParams map[string]interface{}
 
 	model = make(map[string]string)
