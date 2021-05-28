@@ -4,7 +4,7 @@ const (
 	// TypeAndLive 和直播
 	TypeAndLive Type = "and"
 	// TypeTencentyun 腾讯云直播
-	TypeTencentyun Type = "tencentyunLive"
+	TypeTencentyun Type = "tencentyun"
 	// TypeChuangcache 创世云直播
 	TypeChuangcache Type = "chuangcache"
 )

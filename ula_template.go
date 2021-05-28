@@ -1,9 +1,9 @@
 package ula
 
 type ulaTemplate struct {
-	andLive        ulaInternal
-	chuangcache    ulaInternal
-	tencentyunLive ulaInternal
+	andLive     ulaInternal
+	chuangcache ulaInternal
+	tencentyun  ulaInternal
 }
 
 // CreateLive 创建直播信息
@@ -12,49 +12,50 @@ func (t *ulaTemplate) CreateLive(req *CreateLiveReq, opts ...option) (id string,
 	for _, opt := range opts {
 		opt.apply(options)
 	}
+
 	switch options.ulaType {
 	case TypeAndLive:
 		id, err = t.andLive.createLive(req, options)
 	case TypeTencentyun:
-		id, err = t.tencentyunLive.createLive(req, options)
-	case TypeChuangcache:
-		id, err = t.chuangcache.createLive(req, options)
+		id, err = t.tencentyun.createLive(req, options)
 	}
 
 	return
 }
 
-// GetLivePushFlowInfo 获得推流信息
-func (t *ulaTemplate) GetLivePushFlowInfo(id string, opts ...option) (urls []Url, err error) {
+// GetPushUrls 获得推流信息
+func (t *ulaTemplate) GetPushUrls(id string, opts ...option) (urls []Url, err error) {
 	options := defaultOptions()
 	for _, opt := range opts {
 		opt.apply(options)
 	}
+
 	switch options.ulaType {
 	case TypeAndLive:
-		urls, err = t.andLive.getLivePushFlowInfo(id, options)
+		urls, err = t.andLive.getPushUrls(id, options)
 	case TypeTencentyun:
-		urls, err = t.tencentyunLive.getLivePushFlowInfo(id, options)
+		urls, err = t.tencentyun.getPushUrls(id, options)
 	case TypeChuangcache:
-		urls, err = t.chuangcache.getLivePushFlowInfo(id, options)
+		urls, err = t.chuangcache.getPushUrls(id, options)
 	}
 
 	return
 }
 
-// GetLivePullFlowInfo 获得拉流信息
-func (t *ulaTemplate) GetLivePullFlowInfo(id string, opts ...option) (cameras []Camera, err error) {
+// GetPullCameras 获得拉流信息
+func (t *ulaTemplate) GetPullCameras(id string, opts ...option) (cameras []Camera, err error) {
 	options := defaultOptions()
 	for _, opt := range opts {
 		opt.apply(options)
 	}
+
 	switch options.ulaType {
 	case TypeAndLive:
-		cameras, err = t.andLive.getLivePullFlowInfo(id, options)
+		cameras, err = t.andLive.getPullCameras(id, options)
 	case TypeTencentyun:
-		cameras, err = t.tencentyunLive.getLivePullFlowInfo(id, options)
+		cameras, err = t.tencentyun.getPullCameras(id, options)
 	case TypeChuangcache:
-		cameras, err = t.chuangcache.getLivePullFlowInfo(id, options)
+		cameras, err = t.chuangcache.getPullCameras(id, options)
 	}
 
 	return

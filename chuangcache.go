@@ -1,105 +1,83 @@
 package ula
 
 import (
-	"fmt"
-	"time"
+	`fmt`
+	`time`
 
-	"github.com/rs/xid"
-	"github.com/storezhang/gox"
-
-	"github.com/storezhang/ula/conf"
+	`github.com/rs/xid`
+	`github.com/storezhang/gox`
 )
 
 type Chuangcache struct {
-	config conf.Chuangcache
-
 	template ulaTemplate
 }
 
-// NewLive 创建创世云直播实现类
+// NewChuangcache 创建创世云直播实现类
 func NewChuangcache() (chuangcache *Chuangcache) {
-	var config conf.Chuangcache
-
-	chuangcache = &Chuangcache{
-		config: config,
-	}
-
+	chuangcache = &Chuangcache{}
 	chuangcache.template = ulaTemplate{chuangcache: chuangcache}
 
 	return
 }
 
-// CreateLive 创建直播信息
-func (l *Chuangcache) CreateLive(req *CreateLiveReq, opts ...option) (id string, err error) {
-	return l.template.CreateLive(req, opts...)
+func (c *Chuangcache) CreateLive(req *CreateLiveReq, opts ...option) (id string, err error) {
+	return c.template.CreateLive(req, opts...)
 }
 
-// GetLivePushFlowInfo 获得推流信息
-func (l *Chuangcache) GetLivePushFlowInfo(id string, opts ...option) (urls []Url, err error) {
-	return l.template.GetLivePushFlowInfo(id, opts...)
+func (c *Chuangcache) GetPushUrls(id string, opts ...option) (urls []Url, err error) {
+	return c.template.GetPushUrls(id, opts...)
 }
 
-// GetLivePullFlowInfo 获得拉流信息
-func (l *Chuangcache) GetLivePullFlowInfo(id string, opts ...option) (cameras []Camera, err error) {
-	return l.template.GetLivePullFlowInfo(id, opts...)
+func (c *Chuangcache) GetPullCameras(id string, opts ...option) (cameras []Camera, err error) {
+	return c.template.GetPullCameras(id, opts...)
 }
 
 // createLive 创建直播信息
-func (l *Chuangcache) createLive(req *CreateLiveReq, opts *options) (id string, err error) {
+func (c *Chuangcache) createLive(_ *CreateLiveReq, _ *options) (id string, err error) {
 	// 取得和直播返回的直播编号
 	id = xid.New().String()
 
 	return
 }
 
-// getLivePushFlowInfo 获得推流信息
-func (l *Chuangcache) getLivePushFlowInfo(id string, opts *options) (urls []Url, err error) {
-	urls = []Url{
-		{
-			Type: VideoFormatTypeRtmp,
-			Link: l.makeUrl(VideoFormatTypeRtmp, l.config.Push.Domain, id, 1, true),
-		},
-	}
+func (c *Chuangcache) getPushUrls(id string, options *options) (urls []Url, err error) {
+	urls = []Url{{
+		Type: VideoFormatTypeRtmp,
+		Link: c.makeUrl(VideoFormatTypeRtmp, options.pushDomain.domain, id, 1, true, options),
+	}}
 
 	return
 }
 
-// getLivePullFlowInfo 获得拉流信息
-func (l *Chuangcache) getLivePullFlowInfo(id string, opts *options) (cameras []Camera, err error) {
-	cameras = []Camera{
-		{
-			Index: 1,
-			Videos: []Video{
-				{
-					Type: VideoTypeOriginal,
-					Urls: []Url{
-						{
-							Type: VideoFormatTypeRtmp,
-							Link: l.makeUrl(VideoFormatTypeRtmp, l.config.Pull.Domain, id, 1, false),
-						},
-						{
-							Type: VideoFormatTypeHls,
-							Link: l.makeUrl(VideoFormatTypeHls, l.config.Pull.Domain, id, 1, false),
-						},
-						{
-							Type: VideoFormatTypeFlv,
-							Link: l.makeUrl(VideoFormatTypeFlv, l.config.Pull.Domain, id, 1, false),
-						},
-					},
-				},
+func (c *Chuangcache) getPullCameras(id string, options *options) (cameras []Camera, err error) {
+	cameras = []Camera{{
+		Index: 1,
+		Videos: []Video{{
+			Type: VideoTypeOriginal,
+			Urls: []Url{{
+				Type: VideoFormatTypeRtmp,
+				Link: c.makeUrl(VideoFormatTypeRtmp, options.pullDomain.domain, id, 1, false, options),
+			}, {
+				Type: VideoFormatTypeHls,
+				Link: c.makeUrl(VideoFormatTypeHls, options.pullDomain.domain, id, 1, false, options),
+			}, {
+				Type: VideoFormatTypeFlv,
+				Link: c.makeUrl(VideoFormatTypeFlv, options.pullDomain.domain, id, 1, false, options),
 			}},
-	}
+		}},
+	}}
 
 	return
 }
 
-func (l *Chuangcache) makeUrl(
+func (c *Chuangcache) makeUrl(
 	formatType VideoFormatType,
 	domain string,
 	id string, camera int8,
 	isPush bool,
+	options *options,
 ) (url string) {
-	expiration := time.Now().Add(l.config.Expiration)
+	expiration := time.Now().Add(options.expired)
 	expirationTime := expiration.Unix()
 	expirationString := expiration.Format("2006-01-02T15:04:05Z")
 	streamName := fmt.Sprintf("%s-%d", id, camera)
@@ -109,10 +87,10 @@ func (l *Chuangcache) makeUrl(
 		secret string
 	)
 	if isPush {
-		data := fmt.Sprintf("rtmp://%s/live/%s;%s", l.config.Push.Domain, streamName, expirationString)
-		token, _ = gox.Sha256Hmac(data, l.config.Push.Key)
+		data := fmt.Sprintf("rtmp://%s/live/%s;%s", options.pushDomain.domain, streamName, expirationString)
+		token, _ = gox.Sha256Hmac(data, options.pushDomain.key)
 	} else {
-		data := fmt.Sprintf("%s/%s/live/%s%d", l.config.Pull.Key, l.config.Pull.Domain, streamName, expirationTime)
+		data := fmt.Sprintf("%s/%s/live/%s%d", options.pullDomain.key, options.pullDomain.domain, streamName, expirationTime)
 		secret, _ = gox.Md5(data)
 	}
 
@@ -138,7 +116,7 @@ func (l *Chuangcache) makeUrl(
 	case VideoFormatTypeFlv:
 		url = fmt.Sprintf(
 			"%s://%s/live/%s.flv?secret=%s&timestamp=%s",
-			l.config.Scheme,
+			options.scheme,
 			domain,
 			streamName,
 			secret,
@@ -147,7 +125,7 @@ func (l *Chuangcache) makeUrl(
 	case VideoFormatTypeHls:
 		url = fmt.Sprintf(
 			"%s://%s/live/%s.m3u8?secret=%s&timestamp=%s",
-			l.config.Scheme,
+			options.scheme,
 			domain,
 			streamName,
 			secret,
@@ -156,7 +134,7 @@ func (l *Chuangcache) makeUrl(
 	default:
 		url = fmt.Sprintf(
 			"%s://%s/live/%s.flv?secret=%s&timestamp=%s",
-			l.config.Scheme,
+			options.scheme,
 			domain,
 			streamName,
 			secret,

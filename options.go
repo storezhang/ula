@@ -1,23 +1,26 @@
 package ula
 
 import (
-	"time"
+	`time`
 
-	"github.com/storezhang/gox"
+	`github.com/storezhang/gox`
 )
 
 type options struct {
-	// 通信端点
-	endpoint string
-	// 授权密钥
-	secret gox.Secret
 	// 过期时间
 	expired time.Duration
+	// 协议
+	scheme gox.URIScheme
 
-	chuangcache chuangcacheConfig
+	// 和直播
+	andLive andLiveConfig
+	// 腾讯云直播
+	tencentyun tencentyunConfig
 
-	livePull optionDomain
-	livePush optionDomain
+	// 拉流域名配置
+	pullDomain optionDomain
+	// 推流域名配置
+	pushDomain optionDomain
 
 	// 类型
 	ulaType Type
@@ -25,7 +28,9 @@ type options struct {
 
 func defaultOptions() *options {
 	return &options{
-		chuangcache: chuangcacheConfig{},
+		andLive: andLiveConfig{
+			endpoint: "http://dbtadmin.heshangwu.migucloud.com",
+		},
 
 		ulaType: TypeTencentyun,
 	}
