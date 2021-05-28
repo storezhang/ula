@@ -28,10 +28,11 @@ type options struct {
 
 func defaultOptions() *options {
 	return &options{
+		expired: 3 * 24 * time.Hour,
+		scheme:  gox.URISchemeHttps,
+
 		andLive: andLiveConfig{
 			endpoint: "http://dbtadmin.heshangwu.migucloud.com",
 		},
-
-		ulaType: TypeTencentyun,
 	}
 }
