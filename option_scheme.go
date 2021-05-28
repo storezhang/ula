@@ -4,13 +4,13 @@ import (
 	`github.com/storezhang/gox`
 )
 
-var _ Option = (*optionScheme)(nil)
+var _ option = (*optionScheme)(nil)
 
 type optionScheme struct {
 	scheme gox.URIScheme
 }
 
-// Scheme
+// Scheme 配置协议
 func Scheme(scheme gox.URIScheme) *optionScheme {
 	return &optionScheme{
 		scheme: scheme,
