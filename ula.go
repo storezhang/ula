@@ -1,8 +1,8 @@
 package ula
 
 import (
-	"github.com/go-resty/resty/v2"
-	"github.com/storezhang/gox"
+	`github.com/go-resty/resty/v2`
+	`github.com/storezhang/gox`
 )
 
 type Ula interface {
