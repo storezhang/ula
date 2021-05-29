@@ -1,11 +1,11 @@
 package ula
 
 import (
-	`fmt`
-	`strconv`
+	"fmt"
+	"strconv"
 
-	`github.com/go-resty/resty/v2`
-	`github.com/storezhang/gox`
+	"github.com/go-resty/resty/v2"
+	"github.com/storezhang/gox"
 )
 
 type andLive struct {
@@ -26,15 +26,15 @@ func NewAndLive(resty *resty.Request) (live *andLive) {
 	return
 }
 
-func (a *andLive) CreateLive(req *CreateLiveReq, opts ...option) (id string, err error) {
+func (a *andLive) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
 	return a.template.CreateLive(req, opts...)
 }
 
-func (a *andLive) GetPushUrls(id string, opts ...option) (urls []Url, err error) {
+func (a *andLive) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
 	return a.template.GetPushUrls(id, opts...)
 }
 
-func (a *andLive) GetPullCameras(id string, opts ...option) (cameras []Camera, err error) {
+func (a *andLive) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
 	return a.template.GetPullCameras(id, opts...)
 }
 
@@ -61,7 +61,7 @@ func (a *andLive) createLive(req *CreateLiveReq, options *options) (id string, e
 		return
 	}
 
-	url := fmt.Sprintf("%s/api/v10/events/create.json", a.config.Host)
+	url := fmt.Sprintf("%s/api/v10/events/create.json", options.andLive.endpoint)
 	if _, err = a.resty.SetFormData(andLiveReq).SetResult(andLiveRsp).Post(url); nil != err {
 		return
 	}
@@ -136,15 +136,15 @@ func (a *andLive) getAndLiveToken(options *options) (token string, err error) {
 	)
 
 	params := &getAndLiveTokenReq{
-		ClientId:     a.config.Id,
-		ClientSecret: a.config.Secret,
+		ClientId:     options.andLive.clientId,
+		ClientSecret: options.andLive.clientSecret,
 		GrantType:    "client_credentials",
 	}
 	if andLiveReq, err = a.toMap(params); nil != err {
 		return
 	}
 
-	url := fmt.Sprintf("%v/auth/oauth2/access_token", a.config.Host)
+	url := fmt.Sprintf("%v/auth/oauth2/access_token", options.andLive.endpoint)
 	if _, err = a.resty.SetFormData(andLiveReq).SetResult(rsp).Post(url); nil != err {
 		return
 	}

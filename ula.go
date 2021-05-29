@@ -7,11 +7,11 @@ import (
 
 type Ula interface {
 	// CreateLive 创建直播信息
-	CreateLive(req *CreateLiveReq, opts ...option) (id string, err error)
+	CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error)
 	// GetPushUrls 获得推流信息
-	GetPushUrls(id string, opts ...option) (urls []Url, err error)
+	GetPushUrls(id string, opts ...Option) (urls []Url, err error)
 	// GetPullCameras 获得拉流信息
-	GetPullCameras(id string, opts ...option) (cameras []Camera, err error)
+	GetPullCameras(id string, opts ...Option) (cameras []Camera, err error)
 }
 
 // CreateLiveReq 创建一个直播

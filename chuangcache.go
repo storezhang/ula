@@ -1,11 +1,11 @@
 package ula
 
 import (
-	`fmt`
-	`time`
+	"fmt"
+	"time"
 
-	`github.com/rs/xid`
-	`github.com/storezhang/gox`
+	"github.com/rs/xid"
+	"github.com/storezhang/gox"
 )
 
 type Chuangcache struct {
@@ -20,15 +20,15 @@ func NewChuangcache() (chuangcache *Chuangcache) {
 	return
 }
 
-func (c *Chuangcache) CreateLive(req *CreateLiveReq, opts ...option) (id string, err error) {
+func (c *Chuangcache) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
 	return c.template.CreateLive(req, opts...)
 }
 
-func (c *Chuangcache) GetPushUrls(id string, opts ...option) (urls []Url, err error) {
+func (c *Chuangcache) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
 	return c.template.GetPushUrls(id, opts...)
 }
 
-func (c *Chuangcache) GetPullCameras(id string, opts ...option) (cameras []Camera, err error) {
+func (c *Chuangcache) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
 	return c.template.GetPullCameras(id, opts...)
 }
 
@@ -43,7 +43,7 @@ func (c *Chuangcache) createLive(_ *CreateLiveReq, _ *options) (id string, err e
 func (c *Chuangcache) getPushUrls(id string, options *options) (urls []Url, err error) {
 	urls = []Url{{
 		Type: VideoFormatTypeRtmp,
-		Link: c.makeUrl(VideoFormatTypeRtmp, options.pushDomain.domain, id, 1, true, options),
+		Link: c.makeUrl(VideoFormatTypeRtmp, options.pushDomain, id, 1, options),
 	}}
 
 	return
@@ -56,13 +56,13 @@ func (c *Chuangcache) getPullCameras(id string, options *options) (cameras []Cam
 			Type: VideoTypeOriginal,
 			Urls: []Url{{
 				Type: VideoFormatTypeRtmp,
-				Link: c.makeUrl(VideoFormatTypeRtmp, options.pullDomain.domain, id, 1, false, options),
+				Link: c.makeUrl(VideoFormatTypeRtmp, options.pullDomain, id, 1, options),
 			}, {
 				Type: VideoFormatTypeHls,
-				Link: c.makeUrl(VideoFormatTypeHls, options.pullDomain.domain, id, 1, false, options),
+				Link: c.makeUrl(VideoFormatTypeHls, options.pullDomain, id, 1, options),
 			}, {
 				Type: VideoFormatTypeFlv,
-				Link: c.makeUrl(VideoFormatTypeFlv, options.pullDomain.domain, id, 1, false, options),
+				Link: c.makeUrl(VideoFormatTypeFlv, options.pullDomain, id, 1, options),
 			}},
 		}},
 	}}
@@ -72,9 +72,8 @@ func (c *Chuangcache) getPullCameras(id string, options *options) (cameras []Cam
 
 func (c *Chuangcache) makeUrl(
 	formatType VideoFormatType,
-	domain string,
+	domain optionDomain,
 	id string, camera int8,
-	isPush bool,
 	options *options,
 ) (url string) {
 	expiration := time.Now().Add(options.expired)
@@ -86,20 +85,20 @@ func (c *Chuangcache) makeUrl(
 		token  string
 		secret string
 	)
-	if isPush {
-		data := fmt.Sprintf("rtmp://%s/live/%s;%s", options.pushDomain.domain, streamName, expirationString)
-		token, _ = gox.Sha256Hmac(data, options.pushDomain.key)
+	if domain.isPush {
+		data := fmt.Sprintf("rtmp://%s/live/%s;%s", domain.domain, streamName, expirationString)
+		token, _ = gox.Sha256Hmac(data, domain.key)
 	} else {
-		data := fmt.Sprintf("%s/%s/live/%s%d", options.pullDomain.key, options.pullDomain.domain, streamName, expirationTime)
+		data := fmt.Sprintf("%s/%s/live/%s%d", domain.key, domain.domain, streamName, expirationTime)
 		secret, _ = gox.Md5(data)
 	}
 
 	switch formatType {
 	case VideoFormatTypeRtmp:
-		if isPush {
+		if domain.isPush {
 			url = fmt.Sprintf(
 				"rtmp://%s/live/%s?token=%s?expire=%s",
-				domain,
+				domain.domain,
 				streamName,
 				token,
 				expirationString,
@@ -107,7 +106,7 @@ func (c *Chuangcache) makeUrl(
 		} else {
 			url = fmt.Sprintf(
 				"rtmp://%s/live/%s?secret=%s&timestamp=%s",
-				domain,
+				domain.domain,
 				streamName,
 				secret,
 				expirationTime,
@@ -117,7 +116,7 @@ func (c *Chuangcache) makeUrl(
 		url = fmt.Sprintf(
 			"%s://%s/live/%s.flv?secret=%s&timestamp=%s",
 			options.scheme,
-			domain,
+			domain.domain,
 			streamName,
 			secret,
 			expirationTime,
@@ -126,7 +125,7 @@ func (c *Chuangcache) makeUrl(
 		url = fmt.Sprintf(
 			"%s://%s/live/%s.m3u8?secret=%s&timestamp=%s",
 			options.scheme,
-			domain,
+			domain.domain,
 			streamName,
 			secret,
 			expirationTime,
@@ -135,7 +134,7 @@ func (c *Chuangcache) makeUrl(
 		url = fmt.Sprintf(
 			"%s://%s/live/%s.flv?secret=%s&timestamp=%s",
 			options.scheme,
-			domain,
+			domain.domain,
 			streamName,
 			secret,
 			expirationTime,
