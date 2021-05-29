@@ -8,6 +8,7 @@ import (
 	"github.com/storezhang/gox"
 )
 
+// NewResty Resty客户端
 type andLive struct {
 	resty    *resty.Request
 	template ulaTemplate
@@ -18,6 +19,8 @@ func NewAndLive(resty *resty.Request) (live *andLive) {
 	live = &andLive{
 		resty: resty,
 	}
+
+	// live.resty.SetProxy("socks5://192.168.178.178:1080")
 	live.template = ulaTemplate{andLive: live}
 
 	return
@@ -82,11 +85,13 @@ func (a *andLive) getPushUrls(liveId string, options *options) (urls []Url, err 
 		return
 	}
 
-	urls = []Url{
-		{
-			Type: VideoFormatTypeRtmp,
-			Link: andLiveRsp.PushUrl,
-		},
+	if nil != andLiveRsp {
+		urls = []Url{
+			{
+				Type: VideoFormatTypeRtmp,
+				Link: andLiveRsp.PushUrl,
+			},
+		}
 	}
 
 	return
