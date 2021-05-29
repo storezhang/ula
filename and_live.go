@@ -11,15 +11,12 @@ import (
 type andLive struct {
 	resty    *resty.Request
 	template ulaTemplate
-
-	cache map[string]createAndLiveEventRsp
 }
 
 // NewAndLive 创建和直播
 func NewAndLive(resty *resty.Request) (live *andLive) {
 	live = &andLive{
 		resty: resty,
-		cache: make(map[string]createAndLiveEventRsp),
 	}
 	live.template = ulaTemplate{andLive: live}
 
@@ -78,20 +75,17 @@ func (a *andLive) createLive(req *CreateLiveReq, options *options) (id string, e
 	return
 }
 
-func (a *andLive) getPushUrls(id string, options *options) (urls []Url, err error) {
-	var (
-		createRsp createAndLiveEventRsp
-		ok        bool
-	)
+func (a *andLive) getPushUrls(liveId string, options *options) (urls []Url, err error) {
+	var andLiveRsp *getAndLiveEventRsp
 
-	if createRsp, ok = a.cache[id]; !ok {
+	if andLiveRsp, err = a.getAndLiveEvent(liveId, options); nil != err {
 		return
 	}
 
 	urls = []Url{
 		{
 			Type: VideoFormatTypeRtmp,
-			Link: createRsp.PushUrl,
+			Link: andLiveRsp.PushUrl,
 		},
 	}
 
@@ -99,31 +93,66 @@ func (a *andLive) getPushUrls(id string, options *options) (urls []Url, err erro
 }
 
 // getLivePullFlowInfo 获得拉流信息
-func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera, err error) {
-	var (
-		createRsp createAndLiveEventRsp
-		ok        bool
-	)
+func (a *andLive) getPullCameras(liveId string, options *options) (cameras []Camera, err error) {
+	var andLiveRsp *getAndLiveEventRsp
 
-	if createRsp, ok = a.cache[id]; !ok {
+	if andLiveRsp, err = a.getAndLiveEvent(liveId, options); nil != err {
 		return
 	}
 
-	cameras = []Camera{
-		{
-			Index: 1,
-			Videos: []Video{
-				{
-					Type: VideoTypeOriginal,
-					Urls: []Url{
-						{
-							Type: VideoFormatTypeHls,
-							Link: createRsp.Urls[0],
+	if nil != andLiveRsp && 0 != len(andLiveRsp.Urls) {
+		cameras = []Camera{
+			{
+				Index: 1,
+				Videos: []Video{
+					{
+						Type: VideoTypeOriginal,
+						Urls: []Url{
+							{
+								Type: VideoFormatTypeHls,
+								Link: andLiveRsp.Urls[0],
+							},
 						},
 					},
 				},
 			},
-		},
+		}
+	}
+
+	return
+}
+
+func (a *andLive) getAndLiveEvent(liveId string, options *options) (andLiveRsp *getAndLiveEventRsp, err error) {
+	var (
+		andLiveReq map[string]string
+		id         int64
+		token      string
+	)
+
+	if id, err = strconv.ParseInt(liveId, 10, 64); nil != err {
+		return
+	}
+
+	params := &getAndLiveEventReq{
+		ClientId:    options.andLive.clientId,
+		AccessToken: token,
+		Id:          id,
+	}
+
+	if andLiveReq, err = a.toMap(params); nil != err {
+		return
+	}
+
+	andLiveRsp = new(getAndLiveEventRsp)
+	url := fmt.Sprintf("%v/api/v10/events/get.json", options.andLive.endpoint)
+	if _, err = a.resty.SetQueryParams(andLiveReq).SetResult(andLiveRsp).Get(url); nil != err {
+		return
+	}
+
+	if 0 != andLiveRsp.ErrCode {
+		err = gox.NewCodeError(gox.ErrorCode(andLiveRsp.ErrCode), andLiveRsp.ErrMsg, nil)
+
+		return
 	}
 
 	return
@@ -140,6 +169,7 @@ func (a *andLive) getAndLiveToken(options *options) (token string, err error) {
 		ClientSecret: options.andLive.clientSecret,
 		GrantType:    "client_credentials",
 	}
+
 	if andLiveReq, err = a.toMap(params); nil != err {
 		return
 	}
