@@ -1,6 +1,6 @@
 package ula
 
-var _ Option = (*optionAndLive)(nil)
+var _ option = (*optionAndLive)(nil)
 
 type optionAndLive struct {
 	// 通信端点
@@ -13,7 +13,7 @@ type optionAndLive struct {
 	uid int64
 }
 
-// AkSk 配置邮件服务
+// AndLive 配置邮件服务
 func AndLive(endpoint string, clientId string, clientSecret string, uid int64) *optionAndLive {
 	return &optionAndLive{
 		endpoint:     endpoint,

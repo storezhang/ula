@@ -1,6 +1,6 @@
 package ula
 
-var _ Option = (*optionSDK)(nil)
+var _ option = (*optionSDK)(nil)
 
 type optionSDK struct {
 	sdk Type

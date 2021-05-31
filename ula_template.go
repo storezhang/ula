@@ -7,7 +7,7 @@ type ulaTemplate struct {
 }
 
 // CreateLive 创建直播信息
-func (t *ulaTemplate) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
+func (t *ulaTemplate) CreateLive(req *CreateLiveReq, opts ...option) (id string, err error) {
 	options := defaultOptions()
 	for _, opt := range opts {
 		opt.apply(options)
@@ -24,7 +24,7 @@ func (t *ulaTemplate) CreateLive(req *CreateLiveReq, opts ...Option) (id string,
 }
 
 // GetPushUrls 获得推流信息
-func (t *ulaTemplate) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
+func (t *ulaTemplate) GetPushUrls(id string, opts ...option) (urls []Url, err error) {
 	options := defaultOptions()
 	for _, opt := range opts {
 		opt.apply(options)
@@ -43,7 +43,7 @@ func (t *ulaTemplate) GetPushUrls(id string, opts ...Option) (urls []Url, err er
 }
 
 // GetPullCameras 获得拉流信息
-func (t *ulaTemplate) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
+func (t *ulaTemplate) GetPullCameras(id string, opts ...option) (cameras []Camera, err error) {
 	options := defaultOptions()
 	for _, opt := range opts {
 		opt.apply(options)

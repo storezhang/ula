@@ -1,6 +1,6 @@
 package ula
 
-var _ Option = (*optionBizId)(nil)
+var _ option = (*optionBizId)(nil)
 
 type optionBizId struct {
 	bizId int

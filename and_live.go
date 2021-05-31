@@ -1,6 +1,7 @@
 package ula
 
 import (
+	`encoding/json`
 	`fmt`
 	`strconv`
 
@@ -26,15 +27,15 @@ func NewAndLive(resty *resty.Request) (live *andLive) {
 	return
 }
 
-func (a *andLive) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
+func (a *andLive) CreateLive(req *CreateLiveReq, opts ...option) (id string, err error) {
 	return a.template.CreateLive(req, opts...)
 }
 
-func (a *andLive) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
+func (a *andLive) GetPushUrls(id string, opts ...option) (urls []Url, err error) {
 	return a.template.GetPushUrls(id, opts...)
 }
 
-func (a *andLive) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
+func (a *andLive) GetPullCameras(id string, opts ...option) (cameras []Camera, err error) {
 	return a.template.GetPullCameras(id, opts...)
 }
 
@@ -165,32 +166,27 @@ func (a *andLive) getAndLiveEvent(liveId string, options *options) (andLiveRsp *
 
 func (a *andLive) getAndLiveToken(options *options) (token string, err error) {
 	var (
-		andLiveReq map[string]string
-		rsp        = new(getAndLiveTokenRsp)
+		rawRsp *resty.Response
+		rsp    = new(getAndLiveTokenRsp)
 	)
 
-	params := &getAndLiveTokenReq{
-		ClientId:     options.andLive.clientId,
-		ClientSecret: options.andLive.clientSecret,
-		GrantType:    "client_credentials",
-	}
-
-	if andLiveReq, err = a.toMap(params); nil != err {
+	url := fmt.Sprintf("%s/auth/oauth2/access_token", options.andLive.endpoint)
+	if rawRsp, err = a.resty.SetFormData(map[string]string{
+		"client_id":     options.andLive.clientId,
+		"client_secret": options.andLive.clientSecret,
+		"grant_type":    "client_credentials",
+	}).Post(url); nil != err {
 		return
 	}
-
-	url := fmt.Sprintf("%v/auth/oauth2/access_token", options.andLive.endpoint)
-	if _, err = a.resty.SetFormData(andLiveReq).SetResult(rsp).Post(url); nil != err {
+	if err = json.Unmarshal(rawRsp.Body(), rsp); nil != err {
 		return
 	}
 
 	if 1001 == rsp.ErrCode {
 		err = &gox.CodeError{Message: rsp.ErrMsg}
-
-		return
+	} else {
+		token = rsp.AccessToken
 	}
-
-	token = rsp.AccessToken
 
 	return
 }

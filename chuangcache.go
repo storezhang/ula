@@ -20,15 +20,15 @@ func NewChuangcache() (chuangcache *Chuangcache) {
 	return
 }
 
-func (c *Chuangcache) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
+func (c *Chuangcache) CreateLive(req *CreateLiveReq, opts ...option) (id string, err error) {
 	return c.template.CreateLive(req, opts...)
 }
 
-func (c *Chuangcache) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
+func (c *Chuangcache) GetPushUrls(id string, opts ...option) (urls []Url, err error) {
 	return c.template.GetPushUrls(id, opts...)
 }
 
-func (c *Chuangcache) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
+func (c *Chuangcache) GetPullCameras(id string, opts ...option) (cameras []Camera, err error) {
 	return c.template.GetPullCameras(id, opts...)
 }
 
@@ -105,7 +105,7 @@ func (c *Chuangcache) makeUrl(
 			)
 		} else {
 			url = fmt.Sprintf(
-				"rtmp://%s/live/%s?secret=%s&timestamp=%s",
+				"rtmp://%s/live/%s?secret=%s&timestamp=%d",
 				domain.domain,
 				streamName,
 				secret,
@@ -114,7 +114,7 @@ func (c *Chuangcache) makeUrl(
 		}
 	case VideoFormatTypeFlv:
 		url = fmt.Sprintf(
-			"%s://%s/live/%s.flv?secret=%s&timestamp=%s",
+			"%s://%s/live/%s.flv?secret=%s&timestamp=%d",
 			options.scheme,
 			domain.domain,
 			streamName,
@@ -123,7 +123,7 @@ func (c *Chuangcache) makeUrl(
 		)
 	case VideoFormatTypeHls:
 		url = fmt.Sprintf(
-			"%s://%s/live/%s.m3u8?secret=%s&timestamp=%s",
+			"%s://%s/live/%s.m3u8?secret=%s&timestamp=%d",
 			options.scheme,
 			domain.domain,
 			streamName,
@@ -132,7 +132,7 @@ func (c *Chuangcache) makeUrl(
 		)
 	default:
 		url = fmt.Sprintf(
-			"%s://%s/live/%s.flv?secret=%s&timestamp=%s",
+			"%s://%s/live/%s.flv?secret=%s&timestamp=%d",
 			options.scheme,
 			domain.domain,
 			streamName,

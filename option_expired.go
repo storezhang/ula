@@ -4,7 +4,7 @@ import (
 	`time`
 )
 
-var _ Option = (*optionExpired)(nil)
+var _ option = (*optionExpired)(nil)
 
 type optionExpired struct {
 	expired time.Duration

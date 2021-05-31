@@ -1,6 +1,6 @@
 package ula
 
-var _ Option = (*optionDomain)(nil)
+var _ option = (*optionDomain)(nil)
 
 type optionDomain struct {
 	// 授权，类似于用户名
