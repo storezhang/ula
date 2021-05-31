@@ -21,21 +21,21 @@ func NewAndLive(resty *resty.Request) (live *andLive) {
 		resty: resty,
 	}
 
-	// live.resty.SetProxy("socks5://192.168.178.178:1080")
+	// live.resty.SetProxy("socks5://192.168.178.178:1080")\
 	live.template = ulaTemplate{andLive: live}
 
 	return
 }
 
-func (a *andLive) CreateLive(req *CreateLiveReq, opts ...option) (id string, err error) {
+func (a *andLive) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
 	return a.template.CreateLive(req, opts...)
 }
 
-func (a *andLive) GetPushUrls(id string, opts ...option) (urls []Url, err error) {
+func (a *andLive) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
 	return a.template.GetPushUrls(id, opts...)
 }
 
-func (a *andLive) GetPullCameras(id string, opts ...option) (cameras []Camera, err error) {
+func (a *andLive) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
 	return a.template.GetPullCameras(id, opts...)
 }
 
@@ -44,6 +44,7 @@ func (a *andLive) createLive(req *CreateLiveReq, options *options) (id string, e
 		andLiveReq map[string]string
 		andLiveRsp = new(createAndLiveEventRsp)
 		token      string
+		rawRsp     *resty.Response
 	)
 
 	if token, err = a.getAndLiveToken(options); nil != err {
@@ -63,7 +64,11 @@ func (a *andLive) createLive(req *CreateLiveReq, options *options) (id string, e
 	}
 
 	url := fmt.Sprintf("%s/api/v10/events/create.json", options.andLive.endpoint)
-	if _, err = a.resty.SetFormData(andLiveReq).SetResult(andLiveRsp).Post(url); nil != err {
+	if rawRsp, err = a.resty.SetFormData(andLiveReq).Post(url); nil != err {
+		return
+	}
+
+	if err = json.Unmarshal(rawRsp.Body(), andLiveRsp); nil != err {
 		return
 	}
 
@@ -133,6 +138,7 @@ func (a *andLive) getAndLiveEvent(liveId string, options *options) (andLiveRsp *
 		andLiveReq map[string]string
 		id         int64
 		token      string
+		rawRsp     *resty.Response
 	)
 
 	if id, err = strconv.ParseInt(liveId, 10, 64); nil != err {
@@ -151,7 +157,10 @@ func (a *andLive) getAndLiveEvent(liveId string, options *options) (andLiveRsp *
 
 	andLiveRsp = new(getAndLiveEventRsp)
 	url := fmt.Sprintf("%v/api/v10/events/get.json", options.andLive.endpoint)
-	if _, err = a.resty.SetQueryParams(andLiveReq).SetResult(andLiveRsp).Get(url); nil != err {
+	if rawRsp, err = a.resty.SetQueryParams(andLiveReq).Get(url); nil != err {
+		return
+	}
+	if err = json.Unmarshal(rawRsp.Body(), andLiveRsp); nil != err {
 		return
 	}
 

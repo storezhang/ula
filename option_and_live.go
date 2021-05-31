@@ -1,6 +1,6 @@
 package ula
 
-var _ option = (*optionAndLive)(nil)
+var _ Option = (*optionAndLive)(nil)
 
 type optionAndLive struct {
 	// 通信端点

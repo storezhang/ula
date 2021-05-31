@@ -20,15 +20,15 @@ func NewChuangcache() (chuangcache *Chuangcache) {
 	return
 }
 
-func (c *Chuangcache) CreateLive(req *CreateLiveReq, opts ...option) (id string, err error) {
+func (c *Chuangcache) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
 	return c.template.CreateLive(req, opts...)
 }
 
-func (c *Chuangcache) GetPushUrls(id string, opts ...option) (urls []Url, err error) {
+func (c *Chuangcache) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
 	return c.template.GetPushUrls(id, opts...)
 }
 
-func (c *Chuangcache) GetPullCameras(id string, opts ...option) (cameras []Camera, err error) {
+func (c *Chuangcache) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
 	return c.template.GetPullCameras(id, opts...)
 }
 

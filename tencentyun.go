@@ -22,15 +22,15 @@ func NewTencentyun() (tencentyun *Tencentyun) {
 	return
 }
 
-func (t *Tencentyun) CreateLive(req *CreateLiveReq, opts ...option) (id string, err error) {
+func (t *Tencentyun) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
 	return t.template.CreateLive(req, opts...)
 }
 
-func (t *Tencentyun) GetPushUrls(id string, opts ...option) (urls []Url, err error) {
+func (t *Tencentyun) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
 	return t.template.GetPushUrls(id, opts...)
 }
 
-func (t *Tencentyun) GetPullCameras(id string, opts ...option) (cameras []Camera, err error) {
+func (t *Tencentyun) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
 	return t.template.GetPullCameras(id, opts...)
 }
 

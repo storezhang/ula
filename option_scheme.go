@@ -4,7 +4,7 @@ import (
 	`github.com/storezhang/gox`
 )
 
-var _ option = (*optionScheme)(nil)
+var _ Option = (*optionScheme)(nil)
 
 type optionScheme struct {
 	scheme gox.URIScheme
