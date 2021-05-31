@@ -145,6 +145,10 @@ func (a *andLive) getAndLiveEvent(liveId string, options *options) (andLiveRsp *
 		return
 	}
 
+	if token, err = a.getAndLiveToken(options); nil != err {
+		return
+	}
+
 	params := &getAndLiveEventReq{
 		ClientId:    options.andLive.clientId,
 		AccessToken: token,
