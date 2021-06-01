@@ -4,21 +4,25 @@ import (
 	`encoding/json`
 	`fmt`
 	`strconv`
+	`time`
 
 	`github.com/go-resty/resty/v2`
+	`github.com/muesli/cache2go`
 	`github.com/storezhang/gox`
 )
 
 // NewResty Resty客户端
 type andLive struct {
-	resty    *resty.Request
-	template ulaTemplate
+	resty           *resty.Request
+	template        ulaTemplate
+	tokenCacheTable *cache2go.CacheTable
 }
 
 // NewAndLive 创建和直播
 func NewAndLive(resty *resty.Request) (live *andLive) {
 	live = &andLive{
-		resty: resty,
+		resty:           resty,
+		tokenCacheTable: cache2go.Cache("and_live_token_cache"),
 	}
 
 	// live.resty.SetProxy("socks5://192.168.178.178:1080")\
@@ -183,6 +187,10 @@ func (a *andLive) getAndLiveToken(options *options) (token string, err error) {
 		rsp    = new(getAndLiveTokenRsp)
 	)
 
+	if token = a.getFromAndLiveTokenCache(options.andLive.clientId); 0 != len(token) {
+		return
+	}
+
 	url := fmt.Sprintf("%s/auth/oauth2/access_token", options.andLive.endpoint)
 	if rawRsp, err = a.resty.SetFormData(map[string]string{
 		"client_id":     options.andLive.clientId,
@@ -201,6 +209,8 @@ func (a *andLive) getAndLiveToken(options *options) (token string, err error) {
 		token = rsp.AccessToken
 	}
 
+	a.addToAndLiveTokenCache(options.andLive.clientId, time.Duration(rsp.ExpiresIn)*time.Second, token)
+
 	return
 }
 
@@ -217,6 +227,18 @@ func (a *andLive) toMap(obj interface{}) (model map[string]string, err error) {
 
 	for key, value := range flattenParams {
 		model[key] = fmt.Sprintf("%v", value)
+	}
+
+	return
+}
+
+func (a *andLive) addToAndLiveTokenCache(clientId string, expirationTime time.Duration, token string) {
+	a.tokenCacheTable.Add(clientId, expirationTime, token)
+}
+
+func (a *andLive) getFromAndLiveTokenCache(clientId string) (token string) {
+	if res, err := a.tokenCacheTable.Value(clientId); nil == err {
+		token = res.Data().(string)
 	}
 
 	return
