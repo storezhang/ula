@@ -23,7 +23,6 @@ type andLive struct {
 	template ulaTemplate
 
 	tokenCache sync.Map
-	liveCache  sync.Map
 }
 
 // NewAndLive 创建和直播
@@ -32,23 +31,8 @@ func NewAndLive(resty *resty.Request) (live *andLive) {
 		resty: resty,
 
 		tokenCache: sync.Map{},
-		liveCache:  sync.Map{},
 	}
 	live.template = ulaTemplate{andLive: live}
-
-	// 定时清除缓存
-	ticker := time.NewTicker(5 * time.Second)
-	go func() {
-		for range ticker.C {
-			live.liveCache.Range(func(id, rsp interface{}) bool {
-				if rsp.(*andLiveGet).time.Before(time.Now().Add(30 * time.Minute)) {
-					live.liveCache.Delete(id)
-				}
-
-				return true
-			})
-		}
-	}()
 
 	return
 }
@@ -184,18 +168,9 @@ func (a *andLive) stop(id string, options *options) (success bool, err error) {
 
 func (a *andLive) get(id string, options *options) (rsp *andLiveGetRsp, err error) {
 	var (
-		cache  interface{}
-		ok     bool
 		token  string
 		rawRsp *resty.Response
 	)
-
-	if cache, ok = a.liveCache.Load(id); ok {
-		rsp = cache.(*andLiveGet).rsp
-	}
-	if nil != rsp {
-		return
-	}
 
 	if token, err = a.getToken(options); nil != err {
 		return
@@ -214,10 +189,6 @@ func (a *andLive) get(id string, options *options) (rsp *andLiveGetRsp, err erro
 	if err = json.Unmarshal(rawRsp.Body(), rsp); nil != err {
 		return
 	}
-	a.liveCache.Store(id, &andLiveGet{
-		rsp:  rsp,
-		time: time.Now(),
-	})
 
 	return
 }
