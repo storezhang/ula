@@ -12,6 +12,11 @@ import (
 	`github.com/storezhang/gox`
 )
 
+var (
+	_ Ula         = (*andLive)(nil)
+	_ ulaInternal = (*andLive)(nil)
+)
+
 // andLive 和直播
 type andLive struct {
 	resty    *resty.Request
@@ -44,6 +49,10 @@ func (a *andLive) GetPushUrls(id string, opts ...Option) (urls []Url, err error)
 
 func (a *andLive) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
 	return a.template.GetPullCameras(id, opts...)
+}
+
+func (a *andLive) Stop(id string, opts ...Option) (success bool, err error) {
+	return a.template.Stop(id, opts...)
 }
 
 func (a *andLive) createLive(req *CreateLiveReq, options *options) (id string, err error) {
@@ -154,7 +163,7 @@ func (a *andLive) stop(id string, options *options) (success bool, err error) {
 	if err = json.Unmarshal(rawRsp.Body(), rsp); nil != err {
 		return
 	}
-	success = 0 == rsp.ErrCode && "true" == rsp.Success
+	success = 0 == rsp.ErrCode && rsp.Success
 
 	return
 }

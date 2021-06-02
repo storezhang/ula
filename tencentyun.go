@@ -114,7 +114,9 @@ func (t *tencentyun) getPullCameras(id string, options *options) (cameras []Came
 }
 
 func (t *tencentyun) stop(_ string, _ *options) (success bool, err error) {
-	panic("还没有实现")
+	success = true
+
+	return
 }
 
 func (t *tencentyun) makeUrl(

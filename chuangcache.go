@@ -79,7 +79,9 @@ func (c *chuangcache) getPullCameras(id string, options *options) (cameras []Cam
 }
 
 func (c *chuangcache) stop(_ string, _ *options) (success bool, err error) {
-	panic("还没有实现")
+	success = true
+
+	return
 }
 
 func (c *chuangcache) makeUrl(
