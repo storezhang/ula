@@ -36,6 +36,20 @@ func NewAndLive(resty *resty.Request) (live *andLive) {
 	}
 	live.template = ulaTemplate{andLive: live}
 
+	// 定时清除缓存
+	ticker := time.NewTicker(5 * time.Second)
+	go func() {
+		for range ticker.C {
+			live.liveCache.Range(func(id, rsp interface{}) bool {
+				if rsp.(*andLiveGet).time.Before(time.Now().Add(30 * time.Minute)) {
+					live.liveCache.Delete(id)
+				}
+
+				return true
+			})
+		}
+	}()
+
 	return
 }
 
