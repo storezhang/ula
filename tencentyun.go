@@ -10,38 +10,38 @@ import (
 	`github.com/storezhang/gox`
 )
 
-type Tencentyun struct {
+type tencentyun struct {
 	template ulaTemplate
 }
 
 // NewTencentyun 创建腾讯云直播实现类
-func NewTencentyun() (tencentyun *Tencentyun) {
-	tencentyun = &Tencentyun{}
-	tencentyun.template = ulaTemplate{tencentyun: tencentyun}
+func NewTencentyun() (live *tencentyun) {
+	live = &tencentyun{}
+	live.template = ulaTemplate{tencentyun: live}
 
 	return
 }
 
-func (t *Tencentyun) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
+func (t *tencentyun) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
 	return t.template.CreateLive(req, opts...)
 }
 
-func (t *Tencentyun) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
+func (t *tencentyun) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
 	return t.template.GetPushUrls(id, opts...)
 }
 
-func (t *Tencentyun) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
+func (t *tencentyun) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
 	return t.template.GetPullCameras(id, opts...)
 }
 
-func (t *Tencentyun) createLive(_ *CreateLiveReq, _ *options) (id string, err error) {
+func (t *tencentyun) createLive(_ *CreateLiveReq, _ *options) (id string, err error) {
 	// 取得和直播返回的直播编号
 	id = xid.New().String()
 
 	return
 }
 
-func (t *Tencentyun) getPushUrls(id string, options *options) (urls []Url, err error) {
+func (t *tencentyun) getPushUrls(id string, options *options) (urls []Url, err error) {
 	urls = []Url{{
 		Type: VideoFormatTypeRtmp,
 		Link: t.makeUrl(
@@ -56,7 +56,7 @@ func (t *Tencentyun) getPushUrls(id string, options *options) (urls []Url, err e
 	return
 }
 
-func (t *Tencentyun) getPullCameras(id string, options *options) (cameras []Camera, err error) {
+func (t *tencentyun) getPullCameras(id string, options *options) (cameras []Camera, err error) {
 	cameras = []Camera{{
 		Index: 1,
 		Videos: []Video{{
@@ -104,7 +104,7 @@ func (t *Tencentyun) getPullCameras(id string, options *options) (cameras []Came
 	return
 }
 
-func (t *Tencentyun) makeUrl(
+func (t *tencentyun) makeUrl(
 	formatType VideoFormatType,
 	domain optionDomain,
 	id string,

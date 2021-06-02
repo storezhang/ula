@@ -8,39 +8,39 @@ import (
 	`github.com/storezhang/gox`
 )
 
-type Chuangcache struct {
+type chuangcache struct {
 	template ulaTemplate
 }
 
 // NewChuangcache 创建创世云直播实现类
-func NewChuangcache() (chuangcache *Chuangcache) {
-	chuangcache = &Chuangcache{}
-	chuangcache.template = ulaTemplate{chuangcache: chuangcache}
+func NewChuangcache() (live *chuangcache) {
+	live = &chuangcache{}
+	live.template = ulaTemplate{chuangcache: live}
 
 	return
 }
 
-func (c *Chuangcache) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
+func (c *chuangcache) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
 	return c.template.CreateLive(req, opts...)
 }
 
-func (c *Chuangcache) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
+func (c *chuangcache) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
 	return c.template.GetPushUrls(id, opts...)
 }
 
-func (c *Chuangcache) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
+func (c *chuangcache) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
 	return c.template.GetPullCameras(id, opts...)
 }
 
 // createLive 创建直播信息
-func (c *Chuangcache) createLive(_ *CreateLiveReq, _ *options) (id string, err error) {
+func (c *chuangcache) createLive(_ *CreateLiveReq, _ *options) (id string, err error) {
 	// 取得和直播返回的直播编号
 	id = xid.New().String()
 
 	return
 }
 
-func (c *Chuangcache) getPushUrls(id string, options *options) (urls []Url, err error) {
+func (c *chuangcache) getPushUrls(id string, options *options) (urls []Url, err error) {
 	urls = []Url{{
 		Type: VideoFormatTypeRtmp,
 		Link: c.makeUrl(VideoFormatTypeRtmp, options.pushDomain, id, 1, options),
@@ -49,7 +49,7 @@ func (c *Chuangcache) getPushUrls(id string, options *options) (urls []Url, err 
 	return
 }
 
-func (c *Chuangcache) getPullCameras(id string, options *options) (cameras []Camera, err error) {
+func (c *chuangcache) getPullCameras(id string, options *options) (cameras []Camera, err error) {
 	cameras = []Camera{{
 		Index: 1,
 		Videos: []Video{{
@@ -70,7 +70,7 @@ func (c *Chuangcache) getPullCameras(id string, options *options) (cameras []Cam
 	return
 }
 
-func (c *Chuangcache) makeUrl(
+func (c *chuangcache) makeUrl(
 	formatType VideoFormatType,
 	domain optionDomain,
 	id string, camera int8,

@@ -4,28 +4,30 @@ import (
 	`encoding/json`
 	`fmt`
 	`strconv`
+	`sync`
 	`time`
 
 	`github.com/go-resty/resty/v2`
-	`github.com/muesli/cache2go`
 	`github.com/storezhang/gox`
 )
 
-// NewResty Resty客户端
+// andLive 和直播
 type andLive struct {
-	resty           *resty.Request
-	template        ulaTemplate
-	tokenCacheTable *cache2go.CacheTable
+	resty    *resty.Request
+	template ulaTemplate
+
+	tokenCache sync.Map
+	liveCache  sync.Map
 }
 
 // NewAndLive 创建和直播
 func NewAndLive(resty *resty.Request) (live *andLive) {
 	live = &andLive{
-		resty:           resty,
-		tokenCacheTable: cache2go.Cache("and_live_token_cache"),
-	}
+		resty: resty,
 
-	// live.resty.SetProxy("socks5://192.168.178.178:1080")\
+		tokenCache: sync.Map{},
+		liveCache:  sync.Map{},
+	}
 	live.template = ulaTemplate{andLive: live}
 
 	return
@@ -45,150 +47,145 @@ func (a *andLive) GetPullCameras(id string, opts ...Option) (cameras []Camera, e
 
 func (a *andLive) createLive(req *CreateLiveReq, options *options) (id string, err error) {
 	var (
-		andLiveReq map[string]string
-		andLiveRsp = new(createAndLiveEventRsp)
-		token      string
-		rawRsp     *resty.Response
+		rsp    = new(andLiveCreateRsp)
+		token  string
+		rawRsp *resty.Response
 	)
 
-	if token, err = a.getAndLiveToken(options); nil != err {
-		return
-	}
-
-	params := createAndLiveEventReq{
-		ClientId:    options.andLive.clientId,
-		AccessToken: token,
-		Name:        req.Title,
-		StartTime:   req.StartTime,
-		EndTime:     req.EndTime,
-		Uid:         options.andLive.uid,
-	}
-	if andLiveReq, err = a.toMap(params); nil != err {
+	if token, err = a.getToken(options); nil != err {
 		return
 	}
 
 	url := fmt.Sprintf("%s/api/v10/events/create.json", options.andLive.endpoint)
-	if rawRsp, err = a.resty.SetFormData(andLiveReq).Post(url); nil != err {
+	if rawRsp, err = a.resty.SetFormData(map[string]string{
+		"client_id":    options.andLive.clientId,
+		"access_token": token,
+		"name":         req.Title,
+		"start_time":   req.StartTime.Format(),
+		"end_time":     req.EndTime.Format(),
+		"uid":          strconv.FormatInt(options.andLive.uid, 10),
+		"save_video":   "1",
+	}).Post(url); nil != err {
 		return
 	}
 
-	if err = json.Unmarshal(rawRsp.Body(), andLiveRsp); nil != err {
+	if err = json.Unmarshal(rawRsp.Body(), rsp); nil != err {
 		return
 	}
 
-	if 0 != andLiveRsp.ErrCode {
-		err = gox.NewCodeError(gox.ErrorCode(andLiveRsp.ErrCode), andLiveRsp.ErrMsg, nil)
-
-		return
+	if 0 != rsp.ErrCode {
+		err = gox.NewCodeError(gox.ErrorCode(rsp.ErrCode), rsp.ErrMsg, nil)
+	} else {
+		id = strconv.FormatInt(rsp.Id, 10)
 	}
-
-	// 取得和直播返回的直播编号
-	id = strconv.FormatInt(andLiveRsp.Id, 10)
 
 	return
 }
 
-func (a *andLive) getPushUrls(liveId string, options *options) (urls []Url, err error) {
-	var andLiveRsp *getAndLiveEventRsp
-
-	if andLiveRsp, err = a.getAndLiveEvent(liveId, options); nil != err {
+func (a *andLive) getPushUrls(id string, options *options) (urls []Url, err error) {
+	var rsp *andLiveGetRsp
+	if rsp, err = a.get(id, options); nil != err {
 		return
 	}
 
-	if nil != andLiveRsp {
-		urls = []Url{
-			{
-				Type: VideoFormatTypeRtmp,
-				Link: andLiveRsp.PushUrl,
-			},
+	urls = []Url{{
+		Type: VideoFormatTypeRtmp,
+		Link: rsp.PushUrl,
+	}}
+
+	return
+}
+
+func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera, err error) {
+	var rsp *andLiveGetRsp
+	if rsp, err = a.get(id, options); nil != err {
+		return
+	}
+
+	if 0 != rsp.ErrCode {
+		err = gox.NewCodeError(gox.ErrorCode(rsp.ErrCode), rsp.ErrMsg, nil)
+	} else {
+		url := rsp.Urls[0]
+		if rsp.EndTime.Time().After(time.Now()) {
+			// 取得和直播返回的直播编号，这里做特殊处理，查看返回可以发现规律
+			// 20210601210100_7HMMZ6X4
+			// http://wshls.live.migucloud.com/live/7HMMZ6X4_C0/playlist.m3u8
+			// rtmp://devlivepush.migucloud.com/live/7HMMZ6X4_C0
+			url = fmt.Sprintf("https://wshlslive.migucloud.com/live/%s_C0/playlist.m3u8", rsp.miguId())
 		}
+
+		cameras = []Camera{{
+			Index: 1,
+			Videos: []Video{{
+				Type: VideoTypeOriginal,
+				Urls: []Url{{
+					Type: VideoFormatTypeHls,
+					Link: url,
+				}},
+			}},
+		}}
 	}
 
 	return
 }
 
-// getLivePullFlowInfo 获得拉流信息
-func (a *andLive) getPullCameras(liveId string, options *options) (cameras []Camera, err error) {
-	var andLiveRsp *getAndLiveEventRsp
-
-	if andLiveRsp, err = a.getAndLiveEvent(liveId, options); nil != err {
-		return
-	}
-
-	if nil != andLiveRsp && 0 != len(andLiveRsp.Urls) {
-		cameras = []Camera{
-			{
-				Index: 1,
-				Videos: []Video{
-					{
-						Type: VideoTypeOriginal,
-						Urls: []Url{
-							{
-								Type: VideoFormatTypeHls,
-								Link: andLiveRsp.Urls[0],
-							},
-						},
-					},
-				},
-			},
-		}
-	}
-
-	return
-}
-
-func (a *andLive) getAndLiveEvent(liveId string, options *options) (andLiveRsp *getAndLiveEventRsp, err error) {
+func (a *andLive) get(id string, options *options) (rsp *andLiveGetRsp, err error) {
 	var (
-		andLiveReq map[string]string
-		id         int64
-		token      string
-		rawRsp     *resty.Response
+		cache  interface{}
+		ok     bool
+		token  string
+		rawRsp *resty.Response
 	)
 
-	if id, err = strconv.ParseInt(liveId, 10, 64); nil != err {
+	if cache, ok = a.liveCache.Load(id); ok {
+		rsp = cache.(*andLiveGet).rsp
+	}
+	if nil != rsp {
 		return
 	}
 
-	if token, err = a.getAndLiveToken(options); nil != err {
+	if token, err = a.getToken(options); nil != err {
 		return
 	}
 
-	params := &getAndLiveEventReq{
-		ClientId:    options.andLive.clientId,
-		AccessToken: token,
-		Id:          id,
-	}
-
-	if andLiveReq, err = a.toMap(params); nil != err {
+	url := fmt.Sprintf("%s/api/v10/events/get.json", options.andLive.endpoint)
+	if rawRsp, err = a.resty.SetQueryParams(map[string]string{
+		"client_id":    options.andLive.clientId,
+		"access_token": token,
+		"id":           id,
+	}).Get(url); nil != err {
 		return
 	}
 
-	andLiveRsp = new(getAndLiveEventRsp)
-	url := fmt.Sprintf("%v/api/v10/events/get.json", options.andLive.endpoint)
-	if rawRsp, err = a.resty.SetQueryParams(andLiveReq).Get(url); nil != err {
+	rsp = new(andLiveGetRsp)
+	if err = json.Unmarshal(rawRsp.Body(), rsp); nil != err {
 		return
 	}
-	if err = json.Unmarshal(rawRsp.Body(), andLiveRsp); nil != err {
-		return
-	}
-
-	if 0 != andLiveRsp.ErrCode {
-		err = gox.NewCodeError(gox.ErrorCode(andLiveRsp.ErrCode), andLiveRsp.ErrMsg, nil)
-
-		return
-	}
+	a.liveCache.Store(id, &andLiveGet{
+		rsp:  rsp,
+		time: time.Now(),
+	})
 
 	return
 }
 
-func (a *andLive) getAndLiveToken(options *options) (token string, err error) {
+func (a *andLive) getToken(options *options) (token string, err error) {
 	var (
+		cache  interface{}
+		ok     bool
 		rawRsp *resty.Response
 		rsp    = new(getAndLiveTokenRsp)
 	)
 
-	if token = a.getFromAndLiveTokenCache(options.andLive.clientId); 0 != len(token) {
-		return
+	key := options.andLive.clientId
+	// 检查AccessToken是否可以
+	if cache, ok = a.tokenCache.Load(key); ok {
+		var validate bool
+		if token, validate = cache.(*andLiveToken).validate(); validate {
+			return
+		} else {
+			a.tokenCache.Delete(key)
+		}
 	}
 
 	url := fmt.Sprintf("%s/auth/oauth2/access_token", options.andLive.endpoint)
@@ -209,37 +206,10 @@ func (a *andLive) getAndLiveToken(options *options) (token string, err error) {
 		token = rsp.AccessToken
 	}
 
-	a.addToAndLiveTokenCache(options.andLive.clientId, time.Duration(rsp.ExpiresIn)*time.Second, token)
-
-	return
-}
-
-func (a *andLive) toMap(obj interface{}) (model map[string]string, err error) {
-	var flattenParams map[string]interface{}
-
-	model = make(map[string]string)
-	if flattenParams, err = gox.StructToMap(obj); nil != err {
-		return
-	}
-	if flattenParams, err = gox.Flatten(flattenParams, "", gox.DotStyle); nil != err {
-		return
-	}
-
-	for key, value := range flattenParams {
-		model[key] = fmt.Sprintf("%v", value)
-	}
-
-	return
-}
-
-func (a *andLive) addToAndLiveTokenCache(clientId string, expirationTime time.Duration, token string) {
-	a.tokenCacheTable.Add(clientId, expirationTime, token)
-}
-
-func (a *andLive) getFromAndLiveTokenCache(clientId string) (token string) {
-	if res, err := a.tokenCacheTable.Value(clientId); nil == err {
-		token = res.Data().(string)
-	}
+	a.tokenCache.Store(key, &andLiveToken{
+		accessToken: token,
+		expiresIn:   time.Now().Add(time.Duration(1000 * rsp.ExpiresIn)),
+	})
 
 	return
 }
