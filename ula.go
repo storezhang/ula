@@ -12,6 +12,8 @@ type Ula interface {
 	GetPushUrls(id string, opts ...Option) (urls []Url, err error)
 	// GetPullCameras 获得拉流信息
 	GetPullCameras(id string, opts ...Option) (cameras []Camera, err error)
+	// Stop 结束直播
+	Stop(id string, opts ...Option) (success bool, err error)
 }
 
 // CreateLiveReq 创建一个直播

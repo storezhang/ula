@@ -10,11 +10,11 @@ type optionAndLive struct {
 	// 授权，类似于密码
 	clientSecret string
 	// 用户编号，和直播的API有问题，无法登录
-	uid int64
+	uid string
 }
 
 // AndLive 配置和直播
-func AndLive(endpoint string, clientId string, clientSecret string, uid int64) *optionAndLive {
+func AndLive(endpoint string, clientId string, clientSecret string, uid string) *optionAndLive {
 	return &optionAndLive{
 		endpoint:     endpoint,
 		uid:          uid,

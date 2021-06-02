@@ -6,7 +6,6 @@ type ulaTemplate struct {
 	tencentyun  ulaInternal
 }
 
-// CreateLive 创建直播信息
 func (t *ulaTemplate) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
 	options := defaultOptions()
 	for _, opt := range opts {
@@ -23,7 +22,6 @@ func (t *ulaTemplate) CreateLive(req *CreateLiveReq, opts ...Option) (id string,
 	return
 }
 
-// GetPushUrls 获得推流信息
 func (t *ulaTemplate) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
 	options := defaultOptions()
 	for _, opt := range opts {
@@ -42,7 +40,6 @@ func (t *ulaTemplate) GetPushUrls(id string, opts ...Option) (urls []Url, err er
 	return
 }
 
-// GetPullCameras 获得拉流信息
 func (t *ulaTemplate) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
 	options := defaultOptions()
 	for _, opt := range opts {
@@ -56,6 +53,24 @@ func (t *ulaTemplate) GetPullCameras(id string, opts ...Option) (cameras []Camer
 		cameras, err = t.tencentyun.getPullCameras(id, options)
 	case TypeChuangcache:
 		cameras, err = t.chuangcache.getPullCameras(id, options)
+	}
+
+	return
+}
+
+func (t *ulaTemplate) Stop(id string, opts ...Option) (success bool, err error) {
+	options := defaultOptions()
+	for _, opt := range opts {
+		opt.apply(options)
+	}
+
+	switch options.ulaType {
+	case TypeAndLive:
+		success, err = t.andLive.stop(id, options)
+	case TypeTencentyun:
+		success, err = t.tencentyun.stop(id, options)
+	case TypeChuangcache:
+		success, err = t.chuangcache.stop(id, options)
 	}
 
 	return

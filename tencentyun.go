@@ -10,6 +10,11 @@ import (
 	`github.com/storezhang/gox`
 )
 
+var (
+	_ Ula         = (*tencentyun)(nil)
+	_ ulaInternal = (*tencentyun)(nil)
+)
+
 type tencentyun struct {
 	template ulaTemplate
 }
@@ -32,6 +37,10 @@ func (t *tencentyun) GetPushUrls(id string, opts ...Option) (urls []Url, err err
 
 func (t *tencentyun) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
 	return t.template.GetPullCameras(id, opts...)
+}
+
+func (t *tencentyun) Stop(id string, opts ...Option) (success bool, err error) {
+	return t.template.Stop(id, opts...)
 }
 
 func (t *tencentyun) createLive(_ *CreateLiveReq, _ *options) (id string, err error) {
@@ -102,6 +111,10 @@ func (t *tencentyun) getPullCameras(id string, options *options) (cameras []Came
 	}}
 
 	return
+}
+
+func (t *tencentyun) stop(_ string, _ *options) (success bool, err error) {
+	panic("还没有实现")
 }
 
 func (t *tencentyun) makeUrl(

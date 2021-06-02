@@ -8,6 +8,11 @@ import (
 	`github.com/storezhang/gox`
 )
 
+var (
+	_ Ula         = (*chuangcache)(nil)
+	_ ulaInternal = (*chuangcache)(nil)
+)
+
 type chuangcache struct {
 	template ulaTemplate
 }
@@ -32,7 +37,10 @@ func (c *chuangcache) GetPullCameras(id string, opts ...Option) (cameras []Camer
 	return c.template.GetPullCameras(id, opts...)
 }
 
-// createLive 创建直播信息
+func (c *chuangcache) Stop(id string, opts ...Option) (success bool, err error) {
+	return c.template.Stop(id, opts...)
+}
+
 func (c *chuangcache) createLive(_ *CreateLiveReq, _ *options) (id string, err error) {
 	// 取得和直播返回的直播编号
 	id = xid.New().String()
@@ -68,6 +76,10 @@ func (c *chuangcache) getPullCameras(id string, options *options) (cameras []Cam
 	}}
 
 	return
+}
+
+func (c *chuangcache) stop(_ string, _ *options) (success bool, err error) {
+	panic("还没有实现")
 }
 
 func (c *chuangcache) makeUrl(

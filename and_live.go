@@ -4,6 +4,7 @@ import (
 	`encoding/json`
 	`fmt`
 	`strconv`
+	`strings`
 	`sync`
 	`time`
 
@@ -61,9 +62,9 @@ func (a *andLive) createLive(req *CreateLiveReq, options *options) (id string, e
 		"client_id":    options.andLive.clientId,
 		"access_token": token,
 		"name":         req.Title,
-		"start_time":   req.StartTime.Format(),
-		"end_time":     req.EndTime.Format(),
-		"uid":          strconv.FormatInt(options.andLive.uid, 10),
+		"starttime":    req.StartTime.Format(),
+		"endTime":      req.EndTime.Format(),
+		"uid":          options.andLive.uid,
 		"save_video":   "1",
 	}).Post(url); nil != err {
 		return
@@ -105,7 +106,8 @@ func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera,
 	if 0 != rsp.ErrCode {
 		err = gox.NewCodeError(gox.ErrorCode(rsp.ErrCode), rsp.ErrMsg, nil)
 	} else {
-		url := rsp.Urls[0]
+		url := strings.ReplaceAll(rsp.Urls[0], "http://mgcdn.vod.migucloud.com", "https://mgcdnvod.migucloud.com")
+		// 如果直播还没有结束，应该返回拉流地址
 		if rsp.EndTime.Time().After(time.Now()) {
 			// 取得和直播返回的直播编号，这里做特殊处理，查看返回可以发现规律
 			// 20210601210100_7HMMZ6X4
@@ -125,6 +127,34 @@ func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera,
 			}},
 		}}
 	}
+
+	return
+}
+
+func (a *andLive) stop(id string, options *options) (success bool, err error) {
+	var (
+		rsp    = new(andLiveStopRsp)
+		token  string
+		rawRsp *resty.Response
+	)
+
+	if token, err = a.getToken(options); nil != err {
+		return
+	}
+
+	url := fmt.Sprintf("%s/api/v10/events/stop.json", options.andLive.endpoint)
+	if rawRsp, err = a.resty.SetFormData(map[string]string{
+		"client_id":    options.andLive.clientId,
+		"access_token": token,
+		"id":           id,
+	}).Post(url); nil != err {
+		return
+	}
+
+	if err = json.Unmarshal(rawRsp.Body(), rsp); nil != err {
+		return
+	}
+	success = 0 == rsp.ErrCode && "true" == rsp.Success
 
 	return
 }
