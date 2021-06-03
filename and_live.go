@@ -115,7 +115,8 @@ func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera,
 	} else {
 		url := strings.ReplaceAll(rsp.Urls[0], "http://mgcdn.vod.migucloud.com", "https://mgcdnvod.migucloud.com")
 		// 如果直播还没有结束，应该返回拉流地址
-		if rsp.EndTime.Time().After(time.Now()) {
+		// 如果和直播没有推流，一定会返回mm.m3u8结尾的地址（这个地址其实是云录制的观看地址）
+		if strings.HasSuffix(url, "mm.m3u8") || rsp.EndTime.Time().After(time.Now()) {
 			// 取得和直播返回的直播编号，这里做特殊处理，查看返回可以发现规律
 			// 20210601210100_7HMMZ6X4
 			// http://wshls.live.migucloud.com/live/7HMMZ6X4_C0/playlist.m3u8
