@@ -117,7 +117,6 @@ func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera,
 	} else {
 		var url string
 		// 如果直播还没有结束，应该返回拉流地址
-		fmt.Println(rsp.EndTime.Format(), time.Now().Format(gox.DefaultTimeLayout))
 		if rsp.EndTime.Time().After(time.Now()) {
 			// 取得和直播返回的直播编号，这里做特殊处理，查看返回可以发现规律
 			// 20210601210100_7HMMZ6X4
@@ -243,12 +242,11 @@ func (a *andLive) getToken(options *options) (token string, err error) {
 		err = &gox.CodeError{Message: rsp.ErrMsg}
 	} else {
 		token = rsp.AccessToken
+		a.tokenCache.Store(key, &andLiveToken{
+			accessToken: token,
+			expiresIn:   time.Now().Add(time.Duration(1000 * rsp.ExpiresIn)),
+		})
 	}
-
-	a.tokenCache.Store(key, &andLiveToken{
-		accessToken: token,
-		expiresIn:   time.Now().Add(time.Duration(1000 * rsp.ExpiresIn)),
-	})
 
 	return
 }
