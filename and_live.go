@@ -23,6 +23,7 @@ type andLive struct {
 	template ulaTemplate
 
 	tokenCache sync.Map
+	getCache   sync.Map
 }
 
 // NewAndLive 创建和直播
@@ -31,6 +32,7 @@ func NewAndLive(resty *resty.Request) (live *andLive) {
 		resty: resty,
 
 		tokenCache: sync.Map{},
+		getCache:   sync.Map{},
 	}
 	live.template = ulaTemplate{andLive: live}
 
@@ -113,15 +115,17 @@ func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera,
 	if 0 != rsp.ErrCode {
 		err = gox.NewCodeError(gox.ErrorCode(rsp.ErrCode), rsp.ErrMsg, nil)
 	} else {
-		url := strings.ReplaceAll(rsp.Urls[0], "http://mgcdn.vod.migucloud.com", "https://mgcdnvod.migucloud.com")
+		var url string
 		// 如果直播还没有结束，应该返回拉流地址
-		// 如果和直播没有推流，一定会返回mm.m3u8结尾的地址（这个地址其实是云录制的观看地址）
-		if strings.HasSuffix(url, "mm.m3u8") || rsp.EndTime.Time().After(time.Now()) {
+		fmt.Println(rsp.EndTime.Format(), time.Now().Format(gox.DefaultTimeLayout))
+		if rsp.EndTime.Time().After(time.Now()) {
 			// 取得和直播返回的直播编号，这里做特殊处理，查看返回可以发现规律
 			// 20210601210100_7HMMZ6X4
 			// http://wshls.live.migucloud.com/live/7HMMZ6X4_C0/playlist.m3u8
 			// rtmp://devlivepush.migucloud.com/live/7HMMZ6X4_C0
 			url = fmt.Sprintf("https://wshlslive.migucloud.com/live/%s_C0/playlist.m3u8", rsp.miguId())
+		} else {
+			url = strings.ReplaceAll(rsp.Urls[0], "http://mgcdn.vod.migucloud.com", "https://mgcdnvod.migucloud.com")
 		}
 
 		cameras = []Camera{{
@@ -169,9 +173,19 @@ func (a *andLive) stop(id string, options *options) (success bool, err error) {
 
 func (a *andLive) get(id string, options *options) (rsp *andLiveGetRsp, err error) {
 	var (
+		cache  interface{}
+		ok     bool
 		token  string
 		rawRsp *resty.Response
 	)
+
+	key := id
+	if cache, ok = a.tokenCache.Load(key); ok {
+		rsp = cache.(*andLiveGetRsp)
+	}
+	if nil != rsp {
+		return
+	}
 
 	if token, err = a.getToken(options); nil != err {
 		return
@@ -190,6 +204,7 @@ func (a *andLive) get(id string, options *options) (rsp *andLiveGetRsp, err erro
 	if err = json.Unmarshal(rawRsp.Body(), rsp); nil != err {
 		return
 	}
+	a.tokenCache.Store(key, rsp)
 
 	return
 }
@@ -203,7 +218,6 @@ func (a *andLive) getToken(options *options) (token string, err error) {
 	)
 
 	key := options.andLive.clientId
-	// 检查AccessToken是否可以
 	if cache, ok = a.tokenCache.Load(key); ok {
 		var validate bool
 		if token, validate = cache.(*andLiveToken).validate(); validate {
