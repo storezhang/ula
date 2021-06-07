@@ -94,7 +94,7 @@ func (a *andLive) createLive(req *CreateLiveReq, options *options) (id string, e
 
 func (a *andLive) getPushUrls(id string, options *options) (urls []Url, err error) {
 	var rsp *andLiveGetRsp
-	if rsp, err = a.get(id, options); nil != err {
+	if rsp, err = a.get(id, options, true); nil != err {
 		return
 	}
 
@@ -108,7 +108,7 @@ func (a *andLive) getPushUrls(id string, options *options) (urls []Url, err erro
 
 func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera, err error) {
 	var rsp *andLiveGetRsp
-	if rsp, err = a.get(id, options); nil != err {
+	if rsp, err = a.get(id, options, true); nil != err {
 		return
 	}
 
@@ -123,20 +123,29 @@ func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera,
 			// http://wshls.live.migucloud.com/live/7HMMZ6X4_C0/playlist.m3u8
 			// rtmp://devlivepush.migucloud.com/live/7HMMZ6X4_C0
 			url = fmt.Sprintf("https://wshlslive.migucloud.com/live/%s_C0/playlist.m3u8", rsp.miguId())
-		} else {
-			url = strings.ReplaceAll(rsp.Urls[0], "http://mgcdn.vod.migucloud.com", "https://mgcdnvod.migucloud.com")
-		}
-
-		cameras = []Camera{{
-			Index: 1,
-			Videos: []Video{{
-				Type: VideoTypeOriginal,
-				Urls: []Url{{
-					Type: VideoFormatTypeHls,
-					Link: url,
+			cameras = []Camera{{
+				Index: 1,
+				Videos: []Video{{
+					Type: VideoTypeOriginal,
+					Urls: []Url{{
+						Type: VideoFormatTypeHls,
+						Link: url,
+					}},
 				}},
-			}},
-		}}
+			}}
+		} else {
+			if rsp, err = a.get(id, options, false); nil != err {
+				return
+			}
+			url = strings.ReplaceAll(rsp.Urls[0], "http://mgcdn.vod.migucloud.com", "https://mgcdnvod.migucloud.com")
+			cameras = []Camera{{
+				Index: 1,
+				Videos: []Video{{
+					Type: VideoTypeOriginal,
+					Urls: a.parseLinks(rsp.Urls),
+				}},
+			}}
+		}
 	}
 
 	return
@@ -170,7 +179,7 @@ func (a *andLive) stop(id string, options *options) (success bool, err error) {
 	return
 }
 
-func (a *andLive) get(id string, options *options) (rsp *andLiveGetRsp, err error) {
+func (a *andLive) get(id string, options *options, useCache bool) (rsp *andLiveGetRsp, err error) {
 	var (
 		cache  interface{}
 		ok     bool
@@ -178,8 +187,12 @@ func (a *andLive) get(id string, options *options) (rsp *andLiveGetRsp, err erro
 		rawRsp *resty.Response
 	)
 
+	if !useCache {
+		a.getCache.Delete(id)
+	}
+
 	key := id
-	if cache, ok = a.tokenCache.Load(key); ok {
+	if cache, ok = a.getCache.Load(key); ok {
 		rsp = cache.(*andLiveGetRsp)
 	}
 	if nil != rsp {
@@ -203,7 +216,7 @@ func (a *andLive) get(id string, options *options) (rsp *andLiveGetRsp, err erro
 	if err = json.Unmarshal(rawRsp.Body(), rsp); nil != err {
 		return
 	}
-	a.tokenCache.Store(key, rsp)
+	a.getCache.Store(key, rsp)
 
 	return
 }
@@ -245,6 +258,18 @@ func (a *andLive) getToken(options *options) (token string, err error) {
 		a.tokenCache.Store(key, &andLiveToken{
 			accessToken: token,
 			expiresIn:   time.Now().Add(time.Duration(1000 * rsp.ExpiresIn)),
+		})
+	}
+
+	return
+}
+
+func (a *andLive) parseLinks(links []string) (urls []Url) {
+	urls = make([]Url, 0, len(links))
+	for _, link := range links {
+		urls = append(urls, Url{
+			Type: VideoFormatTypeHls,
+			Link: link,
 		})
 	}
 
