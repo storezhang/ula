@@ -144,7 +144,6 @@ func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera,
 			}}
 		}
 	}
-	fmt.Println(cameras)
 
 	return
 }
