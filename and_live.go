@@ -4,7 +4,6 @@ import (
 	`encoding/json`
 	`fmt`
 	`strconv`
-	`strings`
 	`sync`
 	`time`
 
@@ -115,14 +114,13 @@ func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera,
 	if 0 != rsp.ErrCode {
 		err = gox.NewCodeError(gox.ErrorCode(rsp.ErrCode), rsp.ErrMsg, nil)
 	} else {
-		var url string
 		// 如果直播还没有结束，应该返回拉流地址
 		if rsp.EndTime.Time().After(time.Now()) {
 			// 取得和直播返回的直播编号，这里做特殊处理，查看返回可以发现规律
 			// 20210601210100_7HMMZ6X4
 			// http://wshls.live.migucloud.com/live/7HMMZ6X4_C0/playlist.m3u8
 			// rtmp://devlivepush.migucloud.com/live/7HMMZ6X4_C0
-			url = fmt.Sprintf("https://wshlslive.migucloud.com/live/%s_C0/playlist.m3u8", rsp.miguId())
+			url := fmt.Sprintf("https://wshlslive.migucloud.com/live/%s_C0/playlist.m3u8", rsp.miguId())
 			cameras = []Camera{{
 				Index: 1,
 				Videos: []Video{{
@@ -137,7 +135,6 @@ func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera,
 			if rsp, err = a.get(id, options, false); nil != err {
 				return
 			}
-			url = strings.ReplaceAll(rsp.Urls[0], "http://mgcdn.vod.migucloud.com", "https://mgcdnvod.migucloud.com")
 			cameras = []Camera{{
 				Index: 1,
 				Videos: []Video{{
