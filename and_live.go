@@ -21,8 +21,9 @@ type andLive struct {
 	resty    *resty.Request
 	template ulaTemplate
 
-	tokenCache sync.Map
-	getCache   sync.Map
+	tokenCache  sync.Map
+	getCache    sync.Map
+	recordCache sync.Map
 }
 
 // NewAndLive 创建和直播
@@ -30,8 +31,9 @@ func NewAndLive(resty *resty.Request) (live *andLive) {
 	live = &andLive{
 		resty: resty,
 
-		tokenCache: sync.Map{},
-		getCache:   sync.Map{},
+		tokenCache:  sync.Map{},
+		getCache:    sync.Map{},
+		recordCache: sync.Map{},
 	}
 	live.template = ulaTemplate{andLive: live}
 
@@ -114,35 +116,26 @@ func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera,
 	if 0 != rsp.ErrCode {
 		err = gox.NewCodeError(gox.ErrorCode(rsp.ErrCode), rsp.ErrMsg, nil)
 	} else {
+		var urls []string
 		// 如果直播还没有结束，应该返回拉流地址
 		if rsp.EndTime.Time().After(time.Now()) {
 			// 取得和直播返回的直播编号，这里做特殊处理，查看返回可以发现规律
 			// 20210601210100_7HMMZ6X4
 			// http://wshls.live.migucloud.com/live/7HMMZ6X4_C0/playlist.m3u8
 			// rtmp://devlivepush.migucloud.com/live/7HMMZ6X4_C0
-			url := fmt.Sprintf("https://wshlslive.migucloud.com/live/%s_C0/playlist.m3u8", rsp.miguId())
-			cameras = []Camera{{
-				Index: 1,
-				Videos: []Video{{
-					Type: VideoTypeOriginal,
-					Urls: []Url{{
-						Type: VideoFormatTypeHls,
-						Link: url,
-					}},
-				}},
-			}}
+			urls = []string{fmt.Sprintf("https://wshlslive.migucloud.com/live/%s_C0/playlist.m3u8", rsp.miguId())}
 		} else {
-			if rsp, err = a.get(id, options, false); nil != err {
+			if urls, err = a.recordUrls(id, options); nil != err {
 				return
 			}
-			cameras = []Camera{{
-				Index: 1,
-				Videos: []Video{{
-					Type: VideoTypeOriginal,
-					Urls: a.parseLinks(rsp.Urls),
-				}},
-			}}
 		}
+		cameras = []Camera{{
+			Index: 1,
+			Videos: []Video{{
+				Type: VideoTypeOriginal,
+				Urls: a.parseLinks(urls),
+			}},
+		}}
 	}
 
 	return
@@ -172,6 +165,27 @@ func (a *andLive) stop(id string, options *options) (success bool, err error) {
 		return
 	}
 	success = 0 == rsp.ErrCode && rsp.Success
+
+	return
+}
+
+func (a *andLive) recordUrls(id string, options *options) (urls []string, err error) {
+	var (
+		cache interface{}
+		ok    bool
+		rsp   *andLiveGetRsp
+	)
+
+	key := id
+	if cache, ok = a.recordCache.Load(key); ok {
+		urls = cache.([]string)
+	} else {
+		if rsp, err = a.get(id, options, false); nil != err {
+			return
+		}
+		urls = rsp.Urls
+		a.recordCache.Store(key, urls)
+	}
 
 	return
 }
