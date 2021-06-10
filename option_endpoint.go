@@ -29,6 +29,13 @@ func EndpointHttps(host string) *optionEndpoint {
 	return Endpoint(gox.URISchemeHttps, host, 443)
 }
 
+// EndpointURI 配置通信端点
+func EndpointURI(uri string) *optionEndpoint {
+	return &optionEndpoint{
+		endpoint: uri,
+	}
+}
+
 func (d *optionEndpoint) apply(options *options) {
 	options.endpoint = d.endpoint
 }
