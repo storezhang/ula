@@ -183,7 +183,8 @@ func (a *andLive) recordUrls(id string, options *options) (urls []string, err er
 	} else {
 		if rsp, err = a.get(id, options, false); nil != err {
 			return
-		} /**/
+		}
+		urls = make([]string, len(rsp.Urls))
 		for _, url := range rsp.Urls {
 			urls = append(urls, strings.ReplaceAll(url, "http://mgcdn.vod.migucloud.com", "https://mgcdnvod.migucloud.com"))
 		}
