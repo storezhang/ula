@@ -1,6 +1,6 @@
 package ula
 
-type baseAndLiveRsp struct {
+type andLiveBaseRsp struct {
 	// 错误码
 	ErrCode int64 `json:"errcode"`
 	// 错误信息

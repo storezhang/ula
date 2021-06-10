@@ -4,6 +4,7 @@ type ulaTemplate struct {
 	andLive     ulaInternal
 	chuangcache ulaInternal
 	tencentyun  ulaInternal
+	migu        ulaInternal
 }
 
 func (t *ulaTemplate) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
@@ -17,6 +18,10 @@ func (t *ulaTemplate) CreateLive(req *CreateLiveReq, opts ...Option) (id string,
 		id, err = t.andLive.createLive(req, options)
 	case TypeTencentyun:
 		id, err = t.tencentyun.createLive(req, options)
+	case TypeChuangcache:
+		id, err = t.chuangcache.createLive(req, options)
+	case TypeMigu:
+		id, err = t.migu.createLive(req, options)
 	}
 
 	return
@@ -35,6 +40,8 @@ func (t *ulaTemplate) GetPushUrls(id string, opts ...Option) (urls []Url, err er
 		urls, err = t.tencentyun.getPushUrls(id, options)
 	case TypeChuangcache:
 		urls, err = t.chuangcache.getPushUrls(id, options)
+	case TypeMigu:
+		urls, err = t.migu.getPushUrls(id, options)
 	}
 
 	return
@@ -53,6 +60,8 @@ func (t *ulaTemplate) GetPullCameras(id string, opts ...Option) (cameras []Camer
 		cameras, err = t.tencentyun.getPullCameras(id, options)
 	case TypeChuangcache:
 		cameras, err = t.chuangcache.getPullCameras(id, options)
+	case TypeMigu:
+		cameras, err = t.migu.getPullCameras(id, options)
 	}
 
 	return
@@ -71,6 +80,8 @@ func (t *ulaTemplate) Stop(id string, opts ...Option) (success bool, err error) 
 		success, err = t.tencentyun.stop(id, options)
 	case TypeChuangcache:
 		success, err = t.chuangcache.stop(id, options)
+	case TypeMigu:
+		success, err = t.migu.stop(id, options)
 	}
 
 	return

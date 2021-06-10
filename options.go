@@ -7,6 +7,9 @@ import (
 )
 
 type options struct {
+	// 通信商战
+	endpoint string
+
 	// 过期时间
 	expired time.Duration
 	// 协议
@@ -14,6 +17,8 @@ type options struct {
 
 	// 和直播
 	andLive andLiveConfig
+	// 咪咕直播
+	migu miguConfig
 	// 腾讯云直播
 	tencentyun tencentyunConfig
 
@@ -30,9 +35,5 @@ func defaultOptions() *options {
 	return &options{
 		expired: 3 * 24 * time.Hour,
 		scheme:  gox.URISchemeHttps,
-
-		andLive: andLiveConfig{
-			endpoint: "http://dbtadmin.heshangwu.migucloud.com",
-		},
 	}
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type andLiveGetRsp struct {
-	baseAndLiveRsp
+	andLiveBaseRsp
 
 	// 咪咕渠道
 	MiguChannelId string `json:"miguChannelId"`
@@ -17,7 +17,7 @@ type andLiveGetRsp struct {
 	ShareUrls string `json:"shareurls"`
 	// 拉流地址
 	// 如果直播结束后，这个地址就是云录制播放地址
-		Urls []string `json:"urls"`
+	Urls []string `json:"urls"`
 		// 直播开始时间
 		StartTime gox.Timestamp `json:"starttime"`
 		// 直播结束时间

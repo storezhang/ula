@@ -6,7 +6,7 @@ import (
 
 // 创建和直播返回
 type andLiveCreateRsp struct {
-	baseAndLiveRsp
+	andLiveBaseRsp
 
 	// 创建活动编号
 	Id int64 `json:"id"`

@@ -4,6 +4,7 @@ import (
 	`encoding/json`
 	`fmt`
 	`strconv`
+	`strings`
 	`sync`
 	`time`
 
@@ -67,7 +68,7 @@ func (a *andLive) createLive(req *CreateLiveReq, options *options) (id string, e
 		return
 	}
 
-	url := fmt.Sprintf("%s/api/v10/events/create.json", options.andLive.endpoint)
+	url := fmt.Sprintf("%s/api/v10/events/create.json", options.endpoint)
 	if rawRsp, err = a.resty.SetFormData(map[string]string{
 		"client_id":    options.andLive.clientId,
 		"access_token": token,
@@ -152,7 +153,7 @@ func (a *andLive) stop(id string, options *options) (success bool, err error) {
 		return
 	}
 
-	url := fmt.Sprintf("%s/api/v10/events/stop.json", options.andLive.endpoint)
+	url := fmt.Sprintf("%s/api/v10/events/stop.json", options.endpoint)
 	if rawRsp, err = a.resty.SetFormData(map[string]string{
 		"client_id":    options.andLive.clientId,
 		"access_token": token,
@@ -182,8 +183,10 @@ func (a *andLive) recordUrls(id string, options *options) (urls []string, err er
 	} else {
 		if rsp, err = a.get(id, options, false); nil != err {
 			return
+		} /**/
+		for _, url := range rsp.Urls {
+			urls = append(urls, strings.ReplaceAll(url, "http://mgcdn.vod.migucloud.com", "https://mgcdnvod.migucloud.com"))
 		}
-		urls = rsp.Urls
 		a.recordCache.Store(key, urls)
 	}
 
@@ -214,7 +217,7 @@ func (a *andLive) get(id string, options *options, useCache bool) (rsp *andLiveG
 		return
 	}
 
-	url := fmt.Sprintf("%s/api/v10/events/get.json", options.andLive.endpoint)
+	url := fmt.Sprintf("%s/api/v10/events/get.json", options.endpoint)
 	if rawRsp, err = a.resty.SetQueryParams(map[string]string{
 		"client_id":    options.andLive.clientId,
 		"access_token": token,
@@ -250,7 +253,7 @@ func (a *andLive) getToken(options *options) (token string, err error) {
 		}
 	}
 
-	url := fmt.Sprintf("%s/auth/oauth2/access_token", options.andLive.endpoint)
+	url := fmt.Sprintf("%s/auth/oauth2/access_token", options.endpoint)
 	if rawRsp, err = a.resty.SetFormData(map[string]string{
 		"client_id":     options.andLive.clientId,
 		"client_secret": options.andLive.clientSecret,

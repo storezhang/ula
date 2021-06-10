@@ -30,6 +30,7 @@ type CreateLiveReq struct {
 func New(resty *resty.Request) Ula {
 	return &ulaTemplate{
 		andLive:     NewAndLive(resty),
+		migu:        NewMigu(resty),
 		tencentyun:  NewTencentyun(),
 		chuangcache: NewChuangcache(),
 	}
