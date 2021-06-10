@@ -7,5 +7,4 @@ require (
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/rs/xid v1.3.0
 	github.com/storezhang/gox v1.4.11
-	github.com/storezhang/pangu v1.2.0
 )
