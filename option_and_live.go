@@ -12,7 +12,7 @@ type optionAndLive struct {
 }
 
 // AndLive 配置和直播
-func AndLive(endpoint string, clientId string, clientSecret string, uid string) *optionAndLive {
+func AndLive(clientId string, clientSecret string, uid string) *optionAndLive {
 	return &optionAndLive{
 		uid:          uid,
 		clientId:     clientId,
