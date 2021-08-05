@@ -3,22 +3,38 @@ package ula
 var _ Option = (*optionMigu)(nil)
 
 type optionMigu struct {
-	token string
-	key   string
-	iv    string
+	endpoint  string
+	uid       string
+	secretId  string
+	secretKey string
 }
 
 // Migu 配置咪咕直播
-func Migu(token string, key string, iv string) *optionMigu {
+func Migu(uid string, secretId string, secretKey string) *optionMigu {
 	return &optionMigu{
-		token: token,
-		key:   key,
-		iv:    iv,
+		uid:       uid,
+		secretId:  secretId,
+		secretKey: secretKey,
 	}
 }
 
-func (al *optionMigu) apply(options *options) {
-	options.migu.token = al.token
-	options.migu.key = al.key
-	options.migu.iv = al.iv
+// MiguWithEndpoint 配置咪咕直播
+func MiguWithEndpoint(endpoint string, uid string, secretId string, secretKey string) *optionMigu {
+	return &optionMigu{
+		endpoint:  endpoint,
+		uid:       uid,
+		secretId:  secretId,
+		secretKey: secretKey,
+	}
+}
+
+func (m *optionMigu) apply(options *options) {
+	if "" != m.endpoint {
+		options.migu.endpoint = m.endpoint
+	}
+	options.migu.uid = m.uid
+	options.migu.secretId = m.secretId
+	options.migu.secretKey = m.secretKey
+
+	options.ulaType = TypeMigu
 }

@@ -1,6 +1,8 @@
 package ula
 
-type andLiveConfig struct {
+type andConfig struct {
+	// 通信
+	endpoint string
 	// 授权，类似于用户名
 	clientId string
 	// 密码

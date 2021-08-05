@@ -1,5 +1,6 @@
 package ula
 
+// Option 选项
 type Option interface {
 	apply(options *options)
 }

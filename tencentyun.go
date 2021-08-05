@@ -10,38 +10,9 @@ import (
 	`github.com/storezhang/gox`
 )
 
-var (
-	_ Ula         = (*tencentyun)(nil)
-	_ ulaInternal = (*tencentyun)(nil)
-)
+var _ executor = (*tencentyun)(nil)
 
-type tencentyun struct {
-	template ulaTemplate
-}
-
-// NewTencentyun 创建腾讯云直播实现类
-func NewTencentyun() (live *tencentyun) {
-	live = &tencentyun{}
-	live.template = ulaTemplate{tencentyun: live}
-
-	return
-}
-
-func (t *tencentyun) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
-	return t.template.CreateLive(req, opts...)
-}
-
-func (t *tencentyun) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
-	return t.template.GetPushUrls(id, opts...)
-}
-
-func (t *tencentyun) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
-	return t.template.GetPullCameras(id, opts...)
-}
-
-func (t *tencentyun) Stop(id string, opts ...Option) (success bool, err error) {
-	return t.template.Stop(id, opts...)
-}
+type tencentyun struct{}
 
 func (t *tencentyun) createLive(_ *CreateLiveReq, _ *options) (id string, err error) {
 	// 取得和直播返回的直播编号
@@ -55,7 +26,7 @@ func (t *tencentyun) getPushUrls(id string, options *options) (urls []Url, err e
 		Type: VideoFormatTypeRtmp,
 		Link: t.makeUrl(
 			VideoFormatTypeRtmp,
-			options.pushDomain,
+			options.tencentyun.push,
 			id,
 			1,
 			options,
@@ -74,7 +45,7 @@ func (t *tencentyun) getPullCameras(id string, options *options) (cameras []Came
 				Type: VideoFormatTypeRtmp,
 				Link: t.makeUrl(
 					VideoFormatTypeRtmp,
-					options.pullDomain,
+					options.tencentyun.pull,
 					id,
 					1,
 					options,
@@ -83,7 +54,7 @@ func (t *tencentyun) getPullCameras(id string, options *options) (cameras []Came
 				Type: VideoFormatTypeHls,
 				Link: t.makeUrl(
 					VideoFormatTypeHls,
-					options.pullDomain,
+					options.tencentyun.pull,
 					id,
 					1,
 					options,
@@ -92,7 +63,7 @@ func (t *tencentyun) getPullCameras(id string, options *options) (cameras []Came
 				Type: VideoFormatTypeFlv,
 				Link: t.makeUrl(
 					VideoFormatTypeFlv,
-					options.pullDomain,
+					options.tencentyun.pull,
 					id,
 					1,
 					options,
@@ -101,7 +72,7 @@ func (t *tencentyun) getPullCameras(id string, options *options) (cameras []Came
 				Type: VideoFormatTypeRtc,
 				Link: t.makeUrl(
 					VideoFormatTypeRtc,
-					options.pullDomain,
+					options.tencentyun.pull,
 					id,
 					1,
 					options,
@@ -121,7 +92,7 @@ func (t *tencentyun) stop(_ string, _ *options) (success bool, err error) {
 
 func (t *tencentyun) makeUrl(
 	formatType VideoFormatType,
-	domain optionDomain,
+	domain *domain,
 	id string,
 	camera int8,
 	options *options,
@@ -129,19 +100,13 @@ func (t *tencentyun) makeUrl(
 	expirationTime := time.Now().Add(options.expired).Unix()
 	expirationHex := strings.ToUpper(strconv.FormatInt(expirationTime, 16))
 	streamName := fmt.Sprintf("%s-%d", id, camera)
-
-	var key string
-	if domain.isPush {
-		key, _ = gox.Md5(fmt.Sprintf("%s%s%s", domain.key, streamName, expirationHex))
-	} else {
-		key, _ = gox.Md5(fmt.Sprintf("%s%s%s", domain.key, streamName, expirationHex))
-	}
+	key, _ := gox.Md5(fmt.Sprintf("%s%s%s", domain.key, streamName, expirationHex))
 
 	switch formatType {
 	case VideoFormatTypeRtmp:
 		url = fmt.Sprintf(
 			"rtmp://%s/live/%s?txSecret=%s&txTime=%s",
-			domain.domain,
+			domain.addr,
 			streamName,
 			key,
 			expirationHex,
@@ -149,34 +114,31 @@ func (t *tencentyun) makeUrl(
 	case VideoFormatTypeRtc:
 		url = fmt.Sprintf(
 			"webrtc://%s/live/%s?txSecret=%s&txTime=%s",
-			domain.domain,
+			domain.addr,
 			streamName,
 			key,
 			expirationHex,
 		)
 	case VideoFormatTypeFlv:
 		url = fmt.Sprintf(
-			"%s://%s/live/%s.flv?txSecret=%s&txTime=%s",
-			options.scheme,
-			domain.domain,
+			"%s/live/%s.flv?txSecret=%s&txTime=%s",
+			domain.addr,
 			streamName,
 			key,
 			expirationHex,
 		)
 	case VideoFormatTypeHls:
 		url = fmt.Sprintf(
-			"%s://%s/live/%s.m3u8?txSecret=%s&txTime=%s",
-			options.scheme,
-			domain.domain,
+			"%s/live/%s.m3u8?txSecret=%s&txTime=%s",
+			domain.addr,
 			streamName,
 			key,
 			expirationHex,
 		)
 	default:
 		url = fmt.Sprintf(
-			"%s://%s/live/%s.flv?txSecret=%s&txTime=%s",
-			options.scheme,
-			domain.domain,
+			"%s/live/%s.flv?txSecret=%s&txTime=%s",
+			domain.addr,
 			streamName,
 			key,
 			expirationHex,

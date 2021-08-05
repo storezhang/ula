@@ -1,7 +1,8 @@
 package ula
 
 import (
-	`github.com/go-resty/resty/v2`
+	`sync`
+
 	`github.com/storezhang/gox`
 )
 
@@ -27,11 +28,19 @@ type CreateLiveReq struct {
 }
 
 // New 创建适配器
-func New(resty *resty.Request) Ula {
-	return &ulaTemplate{
-		andLive:     NewAndLive(resty),
-		migu:        NewMigu(resty),
-		tencentyun:  NewTencentyun(),
-		chuangcache: NewChuangcache(),
+func New(opts ...Option) Ula {
+	for _, opt := range opts {
+		opt.apply(defaultOptions)
+	}
+
+	return &template{
+		andLive: &and{
+			tokenCache:  sync.Map{},
+			getCache:    sync.Map{},
+			recordCache: sync.Map{},
+		},
+		migu:        &migu{},
+		tencentyun:  &tencentyun{},
+		chuangcache: &chuangcache{},
 	}
 }

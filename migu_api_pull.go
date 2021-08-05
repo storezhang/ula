@@ -34,7 +34,7 @@ type miguPullRsp struct {
 				// 高清：3
 				// 超清：4
 				// 音频：5
-				TransType int `json:"transType"`
+				TransType int `json:"transType,string"`
 				// FLV观察地址
 				UrlFlv string `json:"urlFlv"`
 				// HLS观察地址

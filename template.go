@@ -1,20 +1,20 @@
 package ula
 
-type ulaTemplate struct {
-	andLive     ulaInternal
-	chuangcache ulaInternal
-	tencentyun  ulaInternal
-	migu        ulaInternal
+type template struct {
+	andLive     executor
+	chuangcache executor
+	tencentyun  executor
+	migu        executor
 }
 
-func (t *ulaTemplate) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
-	options := defaultOptions()
+func (t *template) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
+	options := defaultOptions
 	for _, opt := range opts {
 		opt.apply(options)
 	}
 
 	switch options.ulaType {
-	case TypeAndLive:
+	case TypeAnd:
 		id, err = t.andLive.createLive(req, options)
 	case TypeTencentyun:
 		id, err = t.tencentyun.createLive(req, options)
@@ -27,14 +27,14 @@ func (t *ulaTemplate) CreateLive(req *CreateLiveReq, opts ...Option) (id string,
 	return
 }
 
-func (t *ulaTemplate) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
-	options := defaultOptions()
+func (t *template) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
+	options := defaultOptions
 	for _, opt := range opts {
 		opt.apply(options)
 	}
 
 	switch options.ulaType {
-	case TypeAndLive:
+	case TypeAnd:
 		urls, err = t.andLive.getPushUrls(id, options)
 	case TypeTencentyun:
 		urls, err = t.tencentyun.getPushUrls(id, options)
@@ -47,14 +47,14 @@ func (t *ulaTemplate) GetPushUrls(id string, opts ...Option) (urls []Url, err er
 	return
 }
 
-func (t *ulaTemplate) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
-	options := defaultOptions()
+func (t *template) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
+	options := defaultOptions
 	for _, opt := range opts {
 		opt.apply(options)
 	}
 
 	switch options.ulaType {
-	case TypeAndLive:
+	case TypeAnd:
 		cameras, err = t.andLive.getPullCameras(id, options)
 	case TypeTencentyun:
 		cameras, err = t.tencentyun.getPullCameras(id, options)
@@ -67,14 +67,14 @@ func (t *ulaTemplate) GetPullCameras(id string, opts ...Option) (cameras []Camer
 	return
 }
 
-func (t *ulaTemplate) Stop(id string, opts ...Option) (success bool, err error) {
-	options := defaultOptions()
+func (t *template) Stop(id string, opts ...Option) (success bool, err error) {
+	options := defaultOptions
 	for _, opt := range opts {
 		opt.apply(options)
 	}
 
 	switch options.ulaType {
-	case TypeAndLive:
+	case TypeAnd:
 		success, err = t.andLive.stop(id, options)
 	case TypeTencentyun:
 		success, err = t.tencentyun.stop(id, options)

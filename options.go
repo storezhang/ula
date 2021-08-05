@@ -3,37 +3,40 @@ package ula
 import (
 	`time`
 
-	`github.com/storezhang/gox`
+	`github.com/go-resty/resty/v2`
 )
 
+var defaultOptions = &options{
+	resty:   resty.New(),
+	expired: 3 * 24 * time.Hour,
+
+	and: andConfig{
+		endpoint: "http://dbtadmin.heshangwu.migucloud.com",
+	},
+	migu: miguConfig{
+		endpoint: "https://api.migucloud.com",
+	},
+}
+
 type options struct {
-	// 通信商战
-	endpoint string
+	// Http客户端
+	resty *resty.Client
 
 	// 过期时间
 	expired time.Duration
-	// 协议
-	scheme gox.URIScheme
 
 	// 和直播
-	andLive andLiveConfig
+	and andConfig
 	// 咪咕直播
 	migu miguConfig
 	// 腾讯云直播
-	tencentyun tencentyunConfig
-
-	// 拉流域名配置
-	pullDomain optionDomain
-	// 推流域名配置
-	pushDomain optionDomain
+	tencentyun  tencentyunConfig
+	chuangcache chuangcacheConfig
 
 	// 类型
 	ulaType Type
 }
 
-func defaultOptions() *options {
-	return &options{
-		expired: 3 * 24 * time.Hour,
-		scheme:  gox.URISchemeHttps,
-	}
+func (o *options) req() *resty.Request {
+	return o.resty.R()
 }

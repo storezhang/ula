@@ -1,7 +1,7 @@
 package ula
 
-type andLiveStopRsp struct {
-	andLiveBaseRsp
+type andApiStopRsp struct {
+	andApiBaseRsp
 
 	// 直播编号
 	Id int `json:"id"`

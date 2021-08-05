@@ -12,54 +12,17 @@ import (
 	`github.com/storezhang/gox`
 )
 
-var (
-	_ Ula         = (*andLive)(nil)
-	_ ulaInternal = (*andLive)(nil)
-)
+var _ executor = (*and)(nil)
 
-// andLive 和直播
-type andLive struct {
-	resty    *resty.Request
-	template ulaTemplate
-
+type and struct {
 	tokenCache  sync.Map
 	getCache    sync.Map
 	recordCache sync.Map
 }
 
-// NewAndLive 创建和直播
-func NewAndLive(resty *resty.Request) (live *andLive) {
-	live = &andLive{
-		resty: resty,
-
-		tokenCache:  sync.Map{},
-		getCache:    sync.Map{},
-		recordCache: sync.Map{},
-	}
-	live.template = ulaTemplate{andLive: live}
-
-	return
-}
-
-func (a *andLive) CreateLive(req *CreateLiveReq, opts ...Option) (id string, err error) {
-	return a.template.CreateLive(req, opts...)
-}
-
-func (a *andLive) GetPushUrls(id string, opts ...Option) (urls []Url, err error) {
-	return a.template.GetPushUrls(id, opts...)
-}
-
-func (a *andLive) GetPullCameras(id string, opts ...Option) (cameras []Camera, err error) {
-	return a.template.GetPullCameras(id, opts...)
-}
-
-func (a *andLive) Stop(id string, opts ...Option) (success bool, err error) {
-	return a.template.Stop(id, opts...)
-}
-
-func (a *andLive) createLive(req *CreateLiveReq, options *options) (id string, err error) {
+func (a *and) createLive(req *CreateLiveReq, options *options) (id string, err error) {
 	var (
-		rsp    = new(andLiveCreateRsp)
+		rsp    = new(andApiCreateRsp)
 		token  string
 		rawRsp *resty.Response
 	)
@@ -68,14 +31,14 @@ func (a *andLive) createLive(req *CreateLiveReq, options *options) (id string, e
 		return
 	}
 
-	url := fmt.Sprintf("%s/api/v10/events/create.json", options.endpoint)
-	if rawRsp, err = a.resty.SetFormData(map[string]string{
-		"client_id":    options.andLive.clientId,
+	url := fmt.Sprintf("%s/api/v10/events/create.json", options.and.endpoint)
+	if rawRsp, err = options.req().SetFormData(map[string]string{
+		"client_id":    options.and.clientId,
 		"access_token": token,
 		"name":         req.Title,
 		"starttime":    req.StartTime.Format(),
 		"endTime":      req.EndTime.Format(),
-		"uid":          options.andLive.uid,
+		"uid":          options.and.uid,
 		"save_video":   "1",
 	}).Post(url); nil != err {
 		return
@@ -94,8 +57,8 @@ func (a *andLive) createLive(req *CreateLiveReq, options *options) (id string, e
 	return
 }
 
-func (a *andLive) getPushUrls(id string, options *options) (urls []Url, err error) {
-	var rsp *andLiveGetRsp
+func (a *and) getPushUrls(id string, options *options) (urls []Url, err error) {
+	var rsp *andApiGetRsp
 	if rsp, err = a.get(id, options, true); nil != err {
 		return
 	}
@@ -108,8 +71,8 @@ func (a *andLive) getPushUrls(id string, options *options) (urls []Url, err erro
 	return
 }
 
-func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera, err error) {
-	var rsp *andLiveGetRsp
+func (a *and) getPullCameras(id string, options *options) (cameras []Camera, err error) {
+	var rsp *andApiGetRsp
 	if rsp, err = a.get(id, options, true); nil != err {
 		return
 	}
@@ -142,9 +105,9 @@ func (a *andLive) getPullCameras(id string, options *options) (cameras []Camera,
 	return
 }
 
-func (a *andLive) stop(id string, options *options) (success bool, err error) {
+func (a *and) stop(id string, options *options) (success bool, err error) {
 	var (
-		rsp    = new(andLiveStopRsp)
+		rsp    = new(andApiStopRsp)
 		token  string
 		rawRsp *resty.Response
 	)
@@ -153,9 +116,9 @@ func (a *andLive) stop(id string, options *options) (success bool, err error) {
 		return
 	}
 
-	url := fmt.Sprintf("%s/api/v10/events/stop.json", options.endpoint)
-	if rawRsp, err = a.resty.SetFormData(map[string]string{
-		"client_id":    options.andLive.clientId,
+	url := fmt.Sprintf("%s/api/v10/events/stop.json", options.and.endpoint)
+	if rawRsp, err = options.req().SetFormData(map[string]string{
+		"client_id":    options.and.clientId,
 		"access_token": token,
 		"id":           id,
 	}).Post(url); nil != err {
@@ -170,11 +133,11 @@ func (a *andLive) stop(id string, options *options) (success bool, err error) {
 	return
 }
 
-func (a *andLive) recordUrls(id string, options *options) (urls []string, err error) {
+func (a *and) recordUrls(id string, options *options) (urls []string, err error) {
 	var (
 		cache interface{}
 		ok    bool
-		rsp   *andLiveGetRsp
+		rsp   *andApiGetRsp
 	)
 
 	key := id
@@ -194,7 +157,7 @@ func (a *andLive) recordUrls(id string, options *options) (urls []string, err er
 	return
 }
 
-func (a *andLive) get(id string, options *options, useCache bool) (rsp *andLiveGetRsp, err error) {
+func (a *and) get(id string, options *options, useCache bool) (rsp *andApiGetRsp, err error) {
 	var (
 		cache  interface{}
 		ok     bool
@@ -208,7 +171,7 @@ func (a *andLive) get(id string, options *options, useCache bool) (rsp *andLiveG
 
 	key := id
 	if cache, ok = a.getCache.Load(key); ok {
-		rsp = cache.(*andLiveGetRsp)
+		rsp = cache.(*andApiGetRsp)
 	}
 	if nil != rsp {
 		return
@@ -218,16 +181,17 @@ func (a *andLive) get(id string, options *options, useCache bool) (rsp *andLiveG
 		return
 	}
 
-	url := fmt.Sprintf("%s/api/v10/events/get.json", options.endpoint)
-	if rawRsp, err = a.resty.SetQueryParams(map[string]string{
-		"client_id":    options.andLive.clientId,
+	url := fmt.Sprintf("%s/api/v10/events/get.json", options.and.endpoint)
+	if rawRsp, err = options.req().SetQueryParams(map[string]string{
+		"client_id":    options.and.clientId,
 		"access_token": token,
 		"id":           id,
+		"uid":          options.and.uid,
 	}).Get(url); nil != err {
 		return
 	}
 
-	rsp = new(andLiveGetRsp)
+	rsp = new(andApiGetRsp)
 	if err = json.Unmarshal(rawRsp.Body(), rsp); nil != err {
 		return
 	}
@@ -236,28 +200,28 @@ func (a *andLive) get(id string, options *options, useCache bool) (rsp *andLiveG
 	return
 }
 
-func (a *andLive) getToken(options *options) (token string, err error) {
+func (a *and) getToken(options *options) (token string, err error) {
 	var (
 		cache  interface{}
 		ok     bool
 		rawRsp *resty.Response
-		rsp    = new(getAndLiveTokenRsp)
+		rsp    = new(andApiTokenRsp)
 	)
 
-	key := options.andLive.clientId
+	key := options.and.clientId
 	if cache, ok = a.tokenCache.Load(key); ok {
 		var validate bool
-		if token, validate = cache.(*andLiveToken).validate(); validate {
+		if token, validate = cache.(*andToken).validate(); validate {
 			return
 		} else {
 			a.tokenCache.Delete(key)
 		}
 	}
 
-	url := fmt.Sprintf("%s/auth/oauth2/access_token", options.endpoint)
-	if rawRsp, err = a.resty.SetFormData(map[string]string{
-		"client_id":     options.andLive.clientId,
-		"client_secret": options.andLive.clientSecret,
+	url := fmt.Sprintf("%s/auth/oauth2/access_token", options.and.endpoint)
+	if rawRsp, err = options.req().SetFormData(map[string]string{
+		"client_id":     options.and.clientId,
+		"client_secret": options.and.clientSecret,
 		"grant_type":    "client_credentials",
 	}).Post(url); nil != err {
 		return
@@ -270,7 +234,7 @@ func (a *andLive) getToken(options *options) (token string, err error) {
 		err = &gox.CodeError{Message: rsp.ErrMsg}
 	} else {
 		token = rsp.AccessToken
-		a.tokenCache.Store(key, &andLiveToken{
+		a.tokenCache.Store(key, &andToken{
 			accessToken: token,
 			expiresIn:   time.Now().Add(time.Duration(1000 * rsp.ExpiresIn)),
 		})
@@ -279,7 +243,7 @@ func (a *andLive) getToken(options *options) (token string, err error) {
 	return
 }
 
-func (a *andLive) parseLinks(links []string) (urls []Url) {
+func (a *and) parseLinks(links []string) (urls []Url) {
 	urls = make([]Url, 0, len(links))
 	for _, link := range links {
 		urls = append(urls, Url{

@@ -1,10 +1,12 @@
 package ula
 
 type miguConfig struct {
-	// 授权验证
-	token string `validate:"required"`
+	// 通信
+	endpoint string
+	// 用户编号
+	uid string
 	// 加密
-	iv string `validate:"required"`
-	// 加密密钥
-	key string `validate:"required"`
+	secretId string
+	// 加密
+	secretKey string
 }

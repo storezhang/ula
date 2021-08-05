@@ -6,8 +6,8 @@ import (
 	`github.com/storezhang/gox`
 )
 
-type andLiveGetRsp struct {
-	andLiveBaseRsp
+type andApiGetRsp struct {
+	andApiBaseRsp
 
 	// 咪咕渠道
 	MiguChannelId string `json:"miguChannelId"`
@@ -24,6 +24,6 @@ type andLiveGetRsp struct {
 		EndTime gox.Timestamp `json:"endTime"`
 	}
 
-func (g *andLiveGetRsp) miguId() string {
+func (g *andApiGetRsp) miguId() string {
 	return strings.Split(g.MiguChannelId, "_")[1]
 }

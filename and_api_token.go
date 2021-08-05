@@ -1,7 +1,7 @@
 package ula
 
-type getAndLiveTokenRsp struct {
-	andLiveBaseRsp
+type andApiTokenRsp struct {
+	andApiBaseRsp
 
 	// 访问令牌
 	AccessToken string `json:"access_token"`

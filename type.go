@@ -1,8 +1,8 @@
 package ula
 
 const (
-	// TypeAndLive 和直播
-	TypeAndLive Type = "and"
+	// TypeAnd 和直播
+	TypeAnd Type = "and"
 	// TypeTencentyun 腾讯云直播
 	TypeTencentyun Type = "tencentyun"
 	// TypeChuangcache 创世云直播
@@ -11,5 +11,5 @@ const (
 	TypeMigu Type = "migu"
 )
 
-// Type 直播SDK类型
+// Type 直播类型
 type Type string
