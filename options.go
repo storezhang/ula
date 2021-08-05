@@ -1,13 +1,14 @@
 package ula
 
 import (
+	`crypto/tls`
 	`time`
 
 	`github.com/go-resty/resty/v2`
 )
 
 var defaultOptions = &options{
-	resty:   resty.New(),
+	resty:   resty.New().SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),
 	expired: 3 * 24 * time.Hour,
 
 	and: andConfig{
