@@ -5,11 +5,13 @@ import (
 	`time`
 
 	`github.com/go-resty/resty/v2`
+	`github.com/storezhang/gox`
 )
 
 var defaultOptions = &options{
 	resty:   resty.New().SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),
 	expired: 3 * 24 * time.Hour,
+	scheme:  gox.URISchemeHttps,
 
 	and: andConfig{
 		endpoint: "http://dbtadmin.heshangwu.migucloud.com",
@@ -25,6 +27,8 @@ type options struct {
 
 	// 过期时间
 	expired time.Duration
+	// 生成的地址协议
+	scheme gox.URIScheme
 
 	// 和直播
 	and andConfig

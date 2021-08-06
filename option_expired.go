@@ -17,6 +17,6 @@ func Expired(expired time.Duration) *optionExpired {
 	}
 }
 
-func (b *optionExpired) apply(options *options) {
-	options.expired = b.expired
+func (e *optionExpired) apply(options *options) {
+	options.expired = e.expired
 }

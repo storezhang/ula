@@ -75,10 +75,10 @@ func (m *migu) getPullCameras(id string, options *options) (cameras []Camera, er
 					Type: m.parseVideoType(transcode.TransType),
 					Urls: []Url{{
 						Type: VideoFormatTypeFlv,
-						Link: transcode.UrlFlv,
+						Link: m.parseFlv(transcode.UrlFlv, options.scheme),
 					}, {
 						Type: VideoFormatTypeHls,
-						Link: transcode.UrlHls,
+						Link: m.parseHls(transcode.UrlHls, options.scheme),
 					}, {
 						Type: VideoFormatTypeRtmp,
 						Link: transcode.UrlRtmp,
@@ -223,4 +223,19 @@ func (m *migu) parseVideoType(transcodeType int) (videoType VideoType) {
 	}
 
 	return
+}
+
+func (m *migu) parseFlv(original string, scheme gox.URIScheme) string {
+	uri, _ := url.Parse(original)
+	uri.Scheme = string(scheme)
+
+	return uri.String()
+}
+
+func (m *migu) parseHls(original string, scheme gox.URIScheme) string {
+	uri, _ := url.Parse(original)
+	uri.Scheme = string(scheme)
+	uri.Host = "wshlslive.migucloud.com"
+
+	return uri.String()
 }
