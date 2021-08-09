@@ -9,6 +9,7 @@ import (
 	`strings`
 	`time`
 
+	`github.com/go-resty/resty/v2`
 	`github.com/storezhang/gox`
 )
 
@@ -23,6 +24,8 @@ func (m *migu) createLive(req *CreateLiveReq, options *options) (id string, err 
 		StartTime: req.StartTime,
 		EndTime:   req.EndTime,
 		Subject:   req.Title,
+		// 录制视频
+		Record: 2,
 	}
 	createRsp := new(miguCreateRsp)
 	if err = m.invoke(m.createEndpoint(options), createReq, createRsp, gox.HttpMethodPost, options); nil != err {
@@ -57,6 +60,39 @@ func (m *migu) getPushUrls(id string, options *options) (urls []Url, err error) 
 }
 
 func (m *migu) getPullCameras(id string, options *options) (cameras []Camera, err error) {
+	getReq := &miguGetReq{
+		ChannelId: id,
+	}
+	getRsp := new(miguGetRsp)
+	if err = m.invoke(m.getEndpoint(options), getReq, getRsp, gox.HttpMethodGet, options); nil != err {
+		return
+	}
+
+	// 判断直播是否已经结束，如果结束，需要取得录制地址
+	now := time.Now().UnixNano() / 1e6
+	if now < getRsp.Result.EndTime {
+		cameras, err = m.getPullUrls(id, options)
+	} else {
+		cameras, err = m.getRecordUrls(id, options)
+	}
+
+	return
+}
+
+func (m *migu) stop(id string, options *options) (success bool, err error) {
+	stopReq := &miguForbidReq{
+		ChannelId: id,
+	}
+	stopRsp := new(miguBaseRsp)
+	if err = m.invoke(m.stopEndpoint(options), stopReq, stopRsp, gox.HttpMethodGet, options); nil != err {
+		return
+	}
+	success = 0 == stopRsp.Ret
+
+	return
+}
+
+func (m *migu) getPullUrls(id string, options *options) (cameras []Camera, err error) {
 	pullReq := &miguStreamReq{
 		ChannelId: id,
 	}
@@ -92,21 +128,41 @@ func (m *migu) getPullCameras(id string, options *options) (cameras []Camera, er
 	return
 }
 
-func (m *migu) stop(id string, options *options) (success bool, err error) {
-	stopReq := &miguForbidReq{
+func (m *migu) getRecordUrls(id string, options *options) (cameras []Camera, err error) {
+	listReq := &miguListRecordReq{
 		ChannelId: id,
 	}
-	stopRsp := new(miguBaseRsp)
-	if err = m.invoke(m.stopEndpoint(options), stopReq, stopRsp, gox.HttpMethodGet, options); nil != err {
+	listRsp := new(miguListRecordRsp)
+	if err = m.invoke(m.listRecordEndpoint(options), listReq, listRsp, gox.HttpMethodPost, options); nil != err {
 		return
 	}
-	success = 0 == stopRsp.Ret
+
+	contentCount := len(listRsp.Result.Contents)
+	if 0 != contentCount {
+		cameras = make([]Camera, 0, contentCount)
+		for index, content := range listRsp.Result.Contents {
+			cameras = append(cameras, Camera{
+				Index: int8(index),
+				Videos: []Video{{
+					Type: VideoTypeOriginal,
+					Urls: []Url{{
+						Type: VideoFormatTypeHls,
+						Link: m.parseHls(content.RecordUrl, options.scheme),
+					}},
+				}},
+			})
+		}
+	}
 
 	return
 }
 
 func (m *migu) createEndpoint(options *options) string {
 	return fmt.Sprintf("%s/l2/live/createChannel", options.migu.endpoint)
+}
+
+func (m *migu) getEndpoint(options *options) string {
+	return fmt.Sprintf("%s/l2/live/getChannel", options.migu.endpoint)
 }
 
 func (m *migu) pushEndpoint(options *options) string {
@@ -119,6 +175,10 @@ func (m *migu) pullEndpoint(options *options) string {
 
 func (m *migu) stopEndpoint(options *options) string {
 	return fmt.Sprintf("%s/l2/ctrl/forbidChannel", options.migu.endpoint)
+}
+
+func (m *migu) listRecordEndpoint(options *options) string {
+	return fmt.Sprintf("%s/l2/record/listRecord", options.migu.endpoint)
 }
 
 func (m *migu) invoke(api string, req interface{}, rsp interface{}, method gox.HttpMethod, options *options) (err error) {
@@ -195,11 +255,13 @@ func (m *migu) invoke(api string, req interface{}, rsp interface{}, method gox.H
 		options.migu.uid,
 		token,
 	)
+	var miguRsp *resty.Response
 	if gox.HttpMethodGet == method {
-		_, err = options.req().SetQueryParams(getReqMap).SetResult(rsp).Get(api)
+		miguRsp, err = options.req().SetQueryParams(getReqMap).SetResult(rsp).Get(api)
 	} else {
-		_, err = options.req().SetBody(req).SetResult(rsp).Post(api)
+		miguRsp, err = options.req().SetBody(req).SetResult(rsp).Post(api)
 	}
+	fmt.Println(miguRsp)
 
 	return
 }
