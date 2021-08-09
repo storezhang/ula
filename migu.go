@@ -9,7 +9,6 @@ import (
 	`strings`
 	`time`
 
-	`github.com/go-resty/resty/v2`
 	`github.com/storezhang/gox`
 )
 
@@ -255,13 +254,11 @@ func (m *migu) invoke(api string, req interface{}, rsp interface{}, method gox.H
 		options.migu.uid,
 		token,
 	)
-	var miguRsp *resty.Response
 	if gox.HttpMethodGet == method {
-		miguRsp, err = options.req().SetQueryParams(getReqMap).SetResult(rsp).Get(api)
+		_, err = options.req().SetQueryParams(getReqMap).SetResult(rsp).Get(api)
 	} else {
-		miguRsp, err = options.req().SetBody(req).SetResult(rsp).Post(api)
+		_, err = options.req().SetBody(req).SetResult(rsp).Post(api)
 	}
-	fmt.Println(miguRsp)
 
 	return
 }
