@@ -18,6 +18,10 @@ type (
 		// 0：不录制
 		// 2：录制
 		Record int `json:"record"`
+		// 是否导入云点播
+		Demand int `json:"demand"`
+		// 是否在导入点播后自动进行离线转码
+		Transcode int `json:"transcode"`
 	}
 
 	miguCreateRsp struct {

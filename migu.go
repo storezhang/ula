@@ -25,6 +25,10 @@ func (m *migu) createLive(req *CreateLiveReq, options *options) (id string, err 
 		Subject:   req.Title,
 		// 录制视频
 		Record: 2,
+		// 自动导入云点播（只有导入云点播后才能获取播放地址）
+		Demand: 1,
+		// 导入云点播后自动转码
+		Transcode: 1,
 	}
 	createRsp := new(miguCreateRsp)
 	if err = m.invoke(m.createEndpoint(options), createReq, createRsp, gox.HttpMethodPost, options); nil != err {
@@ -69,7 +73,8 @@ func (m *migu) getPullCameras(id string, options *options) (cameras []Camera, er
 
 	// 判断直播是否已经结束，如果结束，需要取得录制地址
 	now := time.Now().UnixNano() / 1e6
-	if now < getRsp.Result.EndTime {
+	// 直播结束5分钟后会自动导入
+	if now < (getRsp.Result.EndTime + int64(5*time.Minute/1e6)) {
 		cameras, err = m.getPullUrls(id, options)
 	} else {
 		cameras, err = m.getRecordUrls(id, options)
@@ -107,7 +112,7 @@ func (m *migu) getPullUrls(id string, options *options) (cameras []Camera, err e
 			camera := Camera{}
 			for _, transcode := range mc.TranscodeList {
 				camera.Videos = append(camera.Videos, Video{
-					Type: m.parseVideoType(transcode.TransType),
+					Type: m.parseTranscodeType(transcode.TransType),
 					Urls: []Url{{
 						Type: VideoFormatTypeFlv,
 						Link: m.parseFlv(transcode.UrlFlv, options.scheme),
@@ -128,29 +133,37 @@ func (m *migu) getPullUrls(id string, options *options) (cameras []Camera, err e
 }
 
 func (m *migu) getRecordUrls(id string, options *options) (cameras []Camera, err error) {
-	listReq := &miguListRecordReq{
+	listReq := &miguListVidReq{
 		ChannelId: id,
 	}
-	listRsp := new(miguListRecordRsp)
-	if err = m.invoke(m.listRecordEndpoint(options), listReq, listRsp, gox.HttpMethodPost, options); nil != err {
+	listRsp := new(miguListVidRsp)
+	if err = m.invoke(m.listVidEndpoint(options), listReq, listRsp, gox.HttpMethodPost, options); nil != err {
 		return
 	}
 
-	contentCount := len(listRsp.Result.Contents)
-	if 0 != contentCount {
-		cameras = make([]Camera, 0, contentCount)
-		for index, content := range listRsp.Result.Contents {
-			cameras = append(cameras, Camera{
-				Index: int8(index),
-				Videos: []Video{{
-					Type: VideoTypeOriginal,
-					Urls: []Url{{
-						Type: VideoFormatTypeHls,
-						Link: m.parseHls(content.RecordUrl, options.scheme),
-					}},
+	cameras = make([]Camera, 0, len(listRsp.Result))
+	for index, vid := range listRsp.Result {
+		urlReq := &miguVodUrlReq{
+			Vid: vid,
+		}
+		urlRsp := new(miguVodUrlRsp)
+		if urlErr := m.invoke(m.vodVerifyHttpsUrlEndpoint(options), urlReq, urlRsp, gox.HttpMethodGet, options); nil != urlErr {
+			continue
+		}
+
+		camera := Camera{
+			Index: int8(index),
+		}
+		for _, video := range urlRsp.Result.List {
+			camera.Videos = append(camera.Videos, Video{
+				Type: m.parseVType(video.VType),
+				Urls: []Url{{
+					Type: VideoFormatTypeHls,
+					Link: video.VUrl,
 				}},
 			})
 		}
+		cameras = append(cameras, camera)
 	}
 
 	return
@@ -178,6 +191,14 @@ func (m *migu) stopEndpoint(options *options) string {
 
 func (m *migu) listRecordEndpoint(options *options) string {
 	return fmt.Sprintf("%s/l2/record/listRecord", options.migu.endpoint)
+}
+
+func (m *migu) listVidEndpoint(options *options) string {
+	return fmt.Sprintf("%s/l2/record/listVid", options.migu.endpoint)
+}
+
+func (m *migu) vodVerifyHttpsUrlEndpoint(options *options) string {
+	return fmt.Sprintf("%s/vod2/v1/getUrlVerifyForHttps", options.migu.endpoint)
 }
 
 func (m *migu) invoke(api string, req interface{}, rsp interface{}, method gox.HttpMethod, options *options) (err error) {
@@ -254,16 +275,18 @@ func (m *migu) invoke(api string, req interface{}, rsp interface{}, method gox.H
 		options.migu.uid,
 		token,
 	)
+	// var miguRsp *resty.Response
 	if gox.HttpMethodGet == method {
 		_, err = options.req().SetQueryParams(getReqMap).SetResult(rsp).Get(api)
 	} else {
 		_, err = options.req().SetBody(req).SetResult(rsp).Post(api)
 	}
+	// fmt.Println(miguRsp)
 
 	return
 }
 
-func (m *migu) parseVideoType(transcodeType int) (videoType VideoType) {
+func (m *migu) parseTranscodeType(transcodeType int) (videoType VideoType) {
 	switch transcodeType {
 	case 0:
 		videoType = VideoTypeOriginal
@@ -277,6 +300,25 @@ func (m *migu) parseVideoType(transcodeType int) (videoType VideoType) {
 		videoType = VideoType1080P
 	case 5:
 		videoType = VideoTypeAudio
+	default:
+		videoType = VideoTypeOriginal
+	}
+
+	return
+}
+
+func (m *migu) parseVType(vType string) (videoType VideoType) {
+	switch vType {
+	case "流畅":
+		videoType = VideoType360P
+	case "标清":
+		videoType = VideoType480P
+	case "高清":
+		videoType = VideoType720P
+	case "超清":
+		videoType = VideoType1080P
+	case "原画质":
+		videoType = VideoTypeOriginal
 	default:
 		videoType = VideoTypeOriginal
 	}
