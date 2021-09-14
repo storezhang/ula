@@ -20,11 +20,13 @@ type Ula interface {
 // CreateLiveReq 创建一个直播
 type CreateLiveReq struct {
 	// 标题
-	Title string `json:"title" yaml:"title" validate:"required"`
+	Title string `json:"title" yaml:"title" xml:"title" validate:"required"`
 	// 开始时间
-	StartTime gox.Timestamp `json:"startTime" yaml:"startTime"`
+	StartTime gox.Timestamp `json:"startTime" yaml:"startTime" xml:"startTime"`
 	// 结束时间
-	EndTime gox.Timestamp `json:"endTime" yaml:"endTime"`
+	EndTime gox.Timestamp `json:"endTime" yaml:"endTime" xml:"endTime"`
+	// 相机个数
+	Cameras int `json:"cameras" yaml:"cameras" xml:"cameras"`
 }
 
 // New 创建适配器

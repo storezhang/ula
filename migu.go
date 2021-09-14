@@ -23,6 +23,7 @@ func (m *migu) createLive(req *CreateLiveReq, options *options) (id string, err 
 		StartTime: req.StartTime,
 		EndTime:   req.EndTime,
 		Subject:   req.Title,
+		CameraNum: 3,
 		// 录制视频
 		Record: 2,
 		// 自动导入云点播（只有导入云点播后才能获取播放地址）
@@ -108,8 +109,11 @@ func (m *migu) getPullUrls(id string, options *options) (cameras []Camera, err e
 	cameraCount := len(pullRsp.Result.CameraList)
 	if 0 != cameraCount {
 		cameras = make([]Camera, 0, cameraCount)
-		for _, mc := range pullRsp.Result.CameraList { // mc是miguCamera的简写
-			camera := Camera{}
+		for index, mc := range pullRsp.Result.CameraList { // mc是miguCamera的简写
+			camera := Camera{
+				Index: int8(index),
+			}
+
 			for _, transcode := range mc.TranscodeList {
 				camera.Videos = append(camera.Videos, Video{
 					Type: m.parseTranscodeType(transcode.TransType),
@@ -178,11 +182,11 @@ func (m *migu) getEndpoint(options *options) string {
 }
 
 func (m *migu) pushEndpoint(options *options) string {
-	return fmt.Sprintf("%s/l2/addr/getPushUrl", options.migu.endpoint)
+	return fmt.Sprintf("%s/l2/name/getPushUrl", options.migu.endpoint)
 }
 
 func (m *migu) pullEndpoint(options *options) string {
-	return fmt.Sprintf("%s/l2/addr/getPullUrl", options.migu.endpoint)
+	return fmt.Sprintf("%s/l2/name/getPullUrl", options.migu.endpoint)
 }
 
 func (m *migu) stopEndpoint(options *options) string {

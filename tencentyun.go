@@ -106,7 +106,7 @@ func (t *tencentyun) makeUrl(
 	case VideoFormatTypeRtmp:
 		url = fmt.Sprintf(
 			"rtmp://%s/live/%s?txSecret=%s&txTime=%s",
-			domain.addr,
+			domain.name,
 			streamName,
 			key,
 			expirationHex,
@@ -114,31 +114,34 @@ func (t *tencentyun) makeUrl(
 	case VideoFormatTypeRtc:
 		url = fmt.Sprintf(
 			"webrtc://%s/live/%s?txSecret=%s&txTime=%s",
-			domain.addr,
+			domain.name,
 			streamName,
 			key,
 			expirationHex,
 		)
 	case VideoFormatTypeFlv:
 		url = fmt.Sprintf(
-			"%s/live/%s.flv?txSecret=%s&txTime=%s",
-			domain.addr,
+			"%s://%s/live/%s.flv?txSecret=%s&txTime=%s",
+			options.scheme,
+			domain.name,
 			streamName,
 			key,
 			expirationHex,
 		)
 	case VideoFormatTypeHls:
 		url = fmt.Sprintf(
-			"%s/live/%s.m3u8?txSecret=%s&txTime=%s",
-			domain.addr,
+			"%s://%s/live/%s.m3u8?txSecret=%s&txTime=%s",
+			options.scheme,
+			domain.name,
 			streamName,
 			key,
 			expirationHex,
 		)
 	default:
 		url = fmt.Sprintf(
-			"%s/live/%s.flv?txSecret=%s&txTime=%s",
-			domain.addr,
+			"%s://%s/live/%s.flv?txSecret=%s&txTime=%s",
+			options.scheme,
+			domain.name,
 			streamName,
 			key,
 			expirationHex,

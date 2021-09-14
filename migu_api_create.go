@@ -14,6 +14,8 @@ type (
 		EndTime gox.Timestamp `json:"endTime"`
 		// 直播主题，最大长度为128个字
 		Subject string `json:"subject"`
+		// 机位数
+		CameraNum int `json:"cameraNum"`
 		// 录制方式
 		// 0：不录制
 		// 2：录制

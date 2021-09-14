@@ -71,10 +71,10 @@ func (c *chuangcache) makeUrl(
 		secret string
 	)
 	if push {
-		data := fmt.Sprintf("rtmp://%s/live/%s;%s", domain.addr, streamName, expirationString)
+		data := fmt.Sprintf("rtmp://%s/live/%s;%s", domain.name, streamName, expirationString)
 		token, _ = gox.Sha256Hmac(data, domain.key)
 	} else {
-		data := fmt.Sprintf("%s/%s/live/%s%d", domain.key, domain.addr, streamName, expirationTime)
+		data := fmt.Sprintf("%s/%s/live/%s%d", domain.key, domain.name, streamName, expirationTime)
 		secret, _ = gox.Md5(data)
 	}
 
@@ -83,7 +83,7 @@ func (c *chuangcache) makeUrl(
 		if push {
 			url = fmt.Sprintf(
 				"rtmp://%s/live/%s?token=%s?expire=%s",
-				domain.addr,
+				domain.name,
 				streamName,
 				token,
 				expirationString,
@@ -91,7 +91,7 @@ func (c *chuangcache) makeUrl(
 		} else {
 			url = fmt.Sprintf(
 				"rtmp://%s/live/%s?secret=%s&timestamp=%d",
-				domain.addr,
+				domain.name,
 				streamName,
 				secret,
 				expirationTime,
@@ -99,24 +99,27 @@ func (c *chuangcache) makeUrl(
 		}
 	case VideoFormatTypeFlv:
 		url = fmt.Sprintf(
-			"%s/live/%s.flv?secret=%s&timestamp=%d",
-			domain.addr,
+			"%s://%s/live/%s.flv?secret=%s&timestamp=%d",
+			options.scheme,
+			domain.name,
 			streamName,
 			secret,
 			expirationTime,
 		)
 	case VideoFormatTypeHls:
 		url = fmt.Sprintf(
-			"%s/live/%s.m3u8?secret=%s&timestamp=%d",
-			domain.addr,
+			"%s://%s/live/%s.m3u8?secret=%s&timestamp=%d",
+			options.scheme,
+			domain.name,
 			streamName,
 			secret,
 			expirationTime,
 		)
 	default:
 		url = fmt.Sprintf(
-			"%s/live/%s.flv?secret=%s&timestamp=%d",
-			domain.addr,
+			"%s://%s/live/%s.flv?secret=%s&timestamp=%d",
+			options.scheme,
+			domain.name,
 			streamName,
 			secret,
 			expirationTime,

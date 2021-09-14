@@ -18,6 +18,6 @@ func Tencentyun(push *domain, pull *domain) *optionTencentyun {
 
 func (t *optionTencentyun) apply(options *options) {
 	options.tencentyun.push = t.push
-	options.tencentyun.pull = t.push
+	options.tencentyun.pull = t.pull
 	options.ulaType = TypeTencentyun
 }
