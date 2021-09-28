@@ -182,11 +182,11 @@ func (m *migu) getEndpoint(options *options) string {
 }
 
 func (m *migu) pushEndpoint(options *options) string {
-	return fmt.Sprintf("%s/l2/name/getPushUrl", options.migu.endpoint)
+	return fmt.Sprintf("%s/l2/addr/getPushUrl", options.migu.endpoint)
 }
 
 func (m *migu) pullEndpoint(options *options) string {
-	return fmt.Sprintf("%s/l2/name/getPullUrl", options.migu.endpoint)
+	return fmt.Sprintf("%s/l2/addr/getPullUrl", options.migu.endpoint)
 }
 
 func (m *migu) stopEndpoint(options *options) string {
