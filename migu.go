@@ -23,7 +23,7 @@ func (m *migu) createLive(req *CreateLiveReq, options *options) (id string, err 
 		StartTime: req.StartTime,
 		EndTime:   req.EndTime,
 		Subject:   req.Title,
-		CameraNum: 3,
+		CameraNum: 1,
 		// 录制视频
 		Record: 2,
 		// 自动导入云点播（只有导入云点播后才能获取播放地址）
