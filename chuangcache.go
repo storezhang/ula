@@ -1,11 +1,11 @@
 package ula
 
 import (
-	`fmt`
-	`time`
+	"fmt"
+	"time"
 
-	`github.com/rs/xid`
-	`github.com/storezhang/gox`
+	"github.com/rs/xid"
+	"github.com/storezhang/gox"
 )
 
 var _ executor = (*chuangcache)(nil)
@@ -53,6 +53,10 @@ func (c *chuangcache) stop(_ string, _ *options) (success bool, err error) {
 	success = true
 
 	return
+}
+
+func (c *chuangcache) getViewerNum(id string, options *options) (viewerNum int, err error) {
+	return 0, nil
 }
 
 func (c *chuangcache) makeUrl(

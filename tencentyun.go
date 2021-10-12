@@ -1,13 +1,13 @@
 package ula
 
 import (
-	`fmt`
-	`strconv`
-	`strings`
-	`time`
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
 
-	`github.com/rs/xid`
-	`github.com/storezhang/gox`
+	"github.com/rs/xid"
+	"github.com/storezhang/gox"
 )
 
 var _ executor = (*tencentyun)(nil)
@@ -88,6 +88,10 @@ func (t *tencentyun) stop(_ string, _ *options) (success bool, err error) {
 	success = true
 
 	return
+}
+
+func (t *tencentyun) getViewerNum(id string, options *options) (viewerNum int, err error) {
+	return 0, nil
 }
 
 func (t *tencentyun) makeUrl(

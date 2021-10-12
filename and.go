@@ -1,15 +1,15 @@
 package ula
 
 import (
-	`encoding/json`
-	`fmt`
-	`strconv`
-	`strings`
-	`sync`
-	`time`
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 
-	`github.com/go-resty/resty/v2`
-	`github.com/storezhang/gox`
+	"github.com/go-resty/resty/v2"
+	"github.com/storezhang/gox"
 )
 
 var _ executor = (*and)(nil)
@@ -253,4 +253,8 @@ func (a *and) parseLinks(links []string) (urls []Url) {
 	}
 
 	return
+}
+
+func (a *and) getViewerNum(id string, options *options) (viewerNum int, err error) {
+	return 0, nil
 }

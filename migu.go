@@ -1,15 +1,15 @@
 package ula
 
 import (
-	`encoding/json`
-	`fmt`
-	`net/url`
-	`sort`
-	`strconv`
-	`strings`
-	`time`
+	"encoding/json"
+	"fmt"
+	"net/url"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
 
-	`github.com/storezhang/gox`
+	"github.com/storezhang/gox"
 )
 
 var _ executor = (*migu)(nil)
@@ -169,6 +169,21 @@ func (m *migu) getRecordUrls(id string, options *options) (cameras []Camera, err
 		}
 		cameras = append(cameras, camera)
 	}
+
+	return
+}
+
+func (m *migu) getViewerNum(id string, options *options) (viewerNum int, err error) {
+	pullReq := &miguStreamReq{
+		ChannelId: id,
+	}
+
+	pullRsp := new(miguPullRsp)
+	if err = m.invoke(m.pullEndpoint(options), pullReq, pullRsp, gox.HttpMethodGet, options); nil != err {
+		return
+	}
+
+	viewerNum = pullRsp.Result.ViewerNum
 
 	return
 }
