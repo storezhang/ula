@@ -55,7 +55,7 @@ func (c *chuangcache) stop(_ string, _ *options) (success bool, err error) {
 	return
 }
 
-func (c *chuangcache) getViewerNum(id string, options *options) (viewerNum int, err error) {
+func (c *chuangcache) getViewerNum(id string, options *options) (viewerNum int64, err error) {
 	return 0, nil
 }
 

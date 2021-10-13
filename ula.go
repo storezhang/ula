@@ -15,6 +15,8 @@ type Ula interface {
 	GetPullCameras(id string, opts ...Option) (cameras []Camera, err error)
 	// Stop 结束直播
 	Stop(id string, opts ...Option) (success bool, err error)
+	// GetViewerNum 获取在线人数
+	GetViewerNum(id string, opts ...Option) (viewerNum int64, err error)
 }
 
 // CreateLiveReq 创建一个直播
