@@ -86,3 +86,23 @@ func (t *template) Stop(id string, opts ...Option) (success bool, err error) {
 
 	return
 }
+
+func (t *template) GetViewerNum(id string, opts ...Option) (viewerNum int64, err error) {
+	_options := defaultOptions
+	for _, opt := range opts {
+		opt.apply(_options)
+	}
+
+	switch _options.ulaType {
+	case TypeAnd:
+		viewerNum, err = t.andLive.getViewerNum(id, _options)
+	case TypeTencentyun:
+		viewerNum, err = t.tencentyun.getViewerNum(id, _options)
+	case TypeChuangcache:
+		viewerNum, err = t.chuangcache.getViewerNum(id, _options)
+	case TypeMigu:
+		viewerNum, err = t.migu.getViewerNum(id, _options)
+	}
+
+	return
+}

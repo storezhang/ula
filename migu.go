@@ -173,6 +173,21 @@ func (m *migu) getRecordUrls(id string, options *options) (cameras []Camera, err
 	return
 }
 
+func (m *migu) getViewerNum(id string, options *options) (viewerNum int64, err error) {
+	pullReq := &miguStreamReq{
+		ChannelId: id,
+	}
+
+	pullRsp := new(miguPullRsp)
+	if err = m.invoke(m.pullEndpoint(options), pullReq, pullRsp, gox.HttpMethodGet, options); nil != err {
+		return
+	}
+
+	viewerNum = int64(pullRsp.Result.ViewerNum)
+
+	return
+}
+
 func (m *migu) createEndpoint(options *options) string {
 	return fmt.Sprintf("%s/l2/live/createChannel", options.migu.endpoint)
 }

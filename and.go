@@ -254,3 +254,7 @@ func (a *and) parseLinks(links []string) (urls []Url) {
 
 	return
 }
+
+func (a *and) getViewerNum(id string, options *options) (viewerNum int64, err error) {
+	return
+}

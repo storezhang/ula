@@ -90,6 +90,10 @@ func (t *tencentyun) stop(_ string, _ *options) (success bool, err error) {
 	return
 }
 
+func (t *tencentyun) getViewerNum(id string, options *options) (viewerNum int64, err error) {
+	return
+}
+
 func (t *tencentyun) makeUrl(
 	formatType VideoFormatType,
 	domain *domain,
