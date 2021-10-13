@@ -256,5 +256,5 @@ func (a *and) parseLinks(links []string) (urls []Url) {
 }
 
 func (a *and) getViewerNum(id string, options *options) (viewerNum int64, err error) {
-	return 0, nil
+	return
 }
