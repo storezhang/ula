@@ -88,20 +88,20 @@ func (t *template) Stop(id string, opts ...Option) (success bool, err error) {
 }
 
 func (t *template) GetViewerNum(id string, opts ...Option) (viewerNum int64, err error) {
-	options := defaultOptions
+	_options := defaultOptions
 	for _, opt := range opts {
-		opt.apply(options)
+		opt.apply(_options)
 	}
 
-	switch options.ulaType {
+	switch _options.ulaType {
 	case TypeAnd:
-		viewerNum, err = t.andLive.getViewerNum(id, options)
+		viewerNum, err = t.andLive.getViewerNum(id, _options)
 	case TypeTencentyun:
-		viewerNum, err = t.tencentyun.getViewerNum(id, options)
+		viewerNum, err = t.tencentyun.getViewerNum(id, _options)
 	case TypeChuangcache:
-		viewerNum, err = t.chuangcache.getViewerNum(id, options)
+		viewerNum, err = t.chuangcache.getViewerNum(id, _options)
 	case TypeMigu:
-		viewerNum, err = t.migu.getViewerNum(id, options)
+		viewerNum, err = t.migu.getViewerNum(id, _options)
 	}
 
 	return
